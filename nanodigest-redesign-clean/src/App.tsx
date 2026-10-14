@@ -1,6 +1,20 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import DOMPurify from 'dompurify'
+import nanoDigestLogo from '../assets/images/nanodigest-logo.png'
 import { contentUrl, formUrl } from './lib/api'
+
+const basePath = import.meta.env.BASE_URL.replace(/\/$/, '')
+
+function internalPathFromLocation(pathname: string) {
+  if (!basePath) return pathname || '/'
+  if (pathname === basePath) return '/'
+  return pathname.startsWith(`${basePath}/`) ? pathname.slice(basePath.length) : pathname
+}
+
+function pathWithBase(path: string) {
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`
+  return `${basePath}${normalizedPath}` || '/'
+}
 
 type Article = {
   id: number
@@ -339,7 +353,9 @@ export default function App() {
   const [cmsPagesLoaded, setCmsPagesLoaded] = useState(false)
   const [cmsProducts, setCmsProducts] = useState<WordPressProduct[]>([])
   const [storeProductsLoaded, setStoreProductsLoaded] = useState(false)
-  const [routePath, setRoutePath] = useState(window.location.pathname)
+  const [routePath, setRoutePath] = useState(() =>
+    internalPathFromLocation(window.location.pathname),
+  )
   const [cmsPost, setCmsPost] = useState<WordPressPost | null>(null)
   const [cmsPage, setCmsPage] = useState<WordPressPage | null>(null)
   const [cmsProduct, setCmsProduct] = useState<WordPressProduct | null>(null)
@@ -353,7 +369,9 @@ export default function App() {
   const [catalogError, setCatalogError] = useState('')
   const [searchResults, setSearchResults] = useState<Article[]>(sampleArticles)
   const [searchLoading, setSearchLoading] = useState(false)
-  const [page, setPage] = useState<PageKey>(pageKeyFromPath(window.location.pathname) ?? 'home')
+  const [page, setPage] = useState<PageKey>(
+    pageKeyFromPath(internalPathFromLocation(window.location.pathname)) ?? 'home',
+  )
   const [topic, setTopic] = useState('All stories')
   const [activeArticle, setActiveArticle] = useState<Article | null>(null)
   const [searchOpen, setSearchOpen] = useState(false)
@@ -428,10 +446,12 @@ export default function App() {
   }, [])
 
   const navigateToPath = (path: string) => {
-    if (window.location.pathname !== path) {
-      window.history.pushState({}, '', path)
+    const internalPath = internalPathFromLocation(path)
+    const nextPath = pathWithBase(internalPath)
+    if (window.location.pathname !== nextPath) {
+      window.history.pushState({}, '', nextPath)
     }
-    setRoutePath(path)
+    setRoutePath(internalPath)
     setMenuOpen(false)
     setSearchOpen(false)
     setActiveArticle(null)
@@ -448,7 +468,7 @@ export default function App() {
 
   useEffect(() => {
     const onPopState = () => {
-      const nextPath = window.location.pathname
+      const nextPath = internalPathFromLocation(window.location.pathname)
       setRoutePath(nextPath)
       setPage(pageKeyFromPath(nextPath) ?? 'home')
     }
@@ -1479,7 +1499,7 @@ export default function App() {
       </div>
       <div className="cms-directory-list">
         {cmsPages.map((item) => (
-          <a href={`/${item.slug}/`} key={item.id} onClick={(event) => {
+          <a href={pathWithBase(`/${item.slug}/`)} key={item.id} onClick={(event) => {
             event.preventDefault()
             navigateToPath(`/${item.slug}/`)
           }}>
@@ -1488,7 +1508,7 @@ export default function App() {
           </a>
         ))}
         {cmsProducts.map((item) => (
-          <a href={`/product/${item.slug}/`} key={`product-${item.id}`} onClick={(event) => {
+          <a href={pathWithBase(`/product/${item.slug}/`)} key={`product-${item.id}`} onClick={(event) => {
             event.preventDefault()
             navigateToPath(`/product/${item.slug}/`)
           }}>
@@ -1514,7 +1534,7 @@ export default function App() {
 
       <header className="masthead">
         <button className="wordmark" onClick={() => openPage('home')} aria-label="Nano Digest home">
-          <img src="/assets/images/nanodigest-logo.png" alt="Nano Digest" />
+          <img src={nanoDigestLogo} alt="Nano Digest" />
         </button>
         <div className="masthead-right">
           <span>
@@ -1934,7 +1954,7 @@ export default function App() {
       <footer>
         <div className="footer-top">
           <button className="footer-logo" onClick={() => openPage('home')}>
-            <img src="/assets/images/nanodigest-logo.png" alt="Nano Digest" />
+            <img src={nanoDigestLogo} alt="Nano Digest" />
           </button>
           <span>Science. Perspective. Possibility.</span>
           <div>

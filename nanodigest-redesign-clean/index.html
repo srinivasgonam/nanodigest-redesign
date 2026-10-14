@@ -9,6 +9,21 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      const params = new URLSearchParams(window.location.search)
+      const route = params.get('p')
+      if (route !== null) {
+        const base = '%BASE_URL%'
+        const query = params.get('q')
+        const hash = params.get('h')
+        const restoredPath = `${base}${route.replace(/^\/+/, '')}`
+        window.history.replaceState(
+          null,
+          '',
+          `${restoredPath}${query ? `?${query}` : ''}${hash ? `#${hash}` : ''}`,
+        )
+      }
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

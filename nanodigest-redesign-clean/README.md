@@ -47,6 +47,8 @@ npm run preview
 
 The production website is served at `http://localhost:4000`. Form submissions are stored in `server/data/submissions.json`. Deploy to a Node.js host; static-only hosting will not run the API or save form submissions.
 
+For the GitHub Pages project site, production assets use the `/nanodigest-redesign/` base path, and the generated `404.html` restores client-side routes on direct visits or refreshes. GitHub Pages serves only static files, so API-backed form submissions still require a separate backend.
+
 ## Content and routes
 
 The Express API reads published articles, categories, pages, and shop products from Nano Digest's public WordPress/WooCommerce APIs. Article and category lists are paginated; article, category, CMS page, product, cart, checkout, and account URLs resolve locally. Content updates require network access to `nanodigest.in`.

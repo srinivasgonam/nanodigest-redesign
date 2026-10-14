@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Nano Digest</title>
+    <script>
+      const base = '/nanodigest-redesign/'
+      const pathname = window.location.pathname
+      const route = pathname.startsWith(base)
+        ? pathname.slice(base.length)
+        : pathname.replace(/^\/+/, '')
+      const query = window.location.search.slice(1)
+      const hash = window.location.hash.slice(1)
+      window.location.replace(
+        `${base}?p=${encodeURIComponent(route)}&q=${encodeURIComponent(query)}&h=${encodeURIComponent(hash)}`,
+      )
+    </script>
+  </head>
+  <body>
+    <p>Redirecting to Nano Digest…</p>
+  </body>
+</html>
