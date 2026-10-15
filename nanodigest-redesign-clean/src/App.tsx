@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type { MouseEvent as ReactMouseEvent, ReactNode } from 'react'
 import DOMPurify from 'dompurify'
 import nanoDigestLogo from '../assets/images/nanodigest-logo.png'
 import { contentUrl, formUrl } from './lib/api'
 import { AdSlot, adsPreviewEnabled } from './components/AdSlot'
+import { Typewriter } from './components/Typewriter'
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, '')
 
@@ -93,55 +93,6 @@ function pageKeyFromPath(path: string): PageKey | null {
     route.replace(/^\/+|\/+$/g, '') === normalized,
   )
   return (match?.[0] as Exclude<PageKey, 'home'> | undefined) ?? (normalized ? null : 'home')
-}
-
-function isPlainLeftClick(event: {
-  defaultPrevented: boolean
-  button: number
-  metaKey: boolean
-  ctrlKey: boolean
-  shiftKey: boolean
-  altKey: boolean
-}) {
-  return (
-    !event.defaultPrevented &&
-    event.button === 0 &&
-    !event.metaKey &&
-    !event.ctrlKey &&
-    !event.shiftKey &&
-    !event.altKey
-  )
-}
-
-type StoryElementProps = {
-  article: Article
-  className: string
-  onActivate: () => void
-  children: ReactNode
-}
-
-function StoryElement({ article, className, onActivate, children }: StoryElementProps) {
-  if (!article.slug) {
-    return (
-      <button type="button" className={className} onClick={onActivate}>
-        {children}
-      </button>
-    )
-  }
-
-  return (
-    <a
-      className={className}
-      href={pathWithBase(`/${article.slug}/`)}
-      onClick={(event) => {
-        if (!isPlainLeftClick(event)) return
-        event.preventDefault()
-        onActivate()
-      }}
-    >
-      {children}
-    </a>
-  )
 }
 
 type PageKey = 'home' | 'about' | 'advertise' | 'contact' | 'privacy' | 'terms'
@@ -512,12 +463,6 @@ export default function App() {
     } else {
       setActiveArticle(article)
     }
-  }
-
-  const linkClick = (event: ReactMouseEvent<HTMLAnchorElement>, path: string) => {
-    if (!isPlainLeftClick(event)) return
-    event.preventDefault()
-    navigateToPath(path)
   }
 
   useEffect(() => {
@@ -1544,7 +1489,7 @@ export default function App() {
         <AdSlot placement="archive-banner" />
         <div className="article-grid">
           {articles.map((article) => (
-            <StoryElement article={article} className="article-card glass" key={article.id} onActivate={() => openStory(article)}>
+            <button className="article-card glass" key={article.id} onClick={() => openStory(article)}>
               <div className="article-image"><img src={article.image} alt={article.title} loading="lazy" /></div>
               <div className="article-card-copy">
                 <span className="category-label">{article.category}</span>
@@ -1552,7 +1497,7 @@ export default function App() {
                 <p>{article.description}</p>
                 <div className="article-meta"><span>{article.date}</span></div>
               </div>
-            </StoryElement>
+            </button>
           ))}
         </div>
         {loadingStories && <p className="catalog-loading">Loading stories…</p>}
@@ -1575,13 +1520,19 @@ export default function App() {
       </div>
       <div className="cms-directory-list">
         {cmsPages.map((item) => (
-          <a href={pathWithBase(`/${item.slug}/`)} key={item.id} onClick={(event) => linkClick(event, `/${item.slug}/`)}>
+          <a href={pathWithBase(`/${item.slug}/`)} key={item.id} onClick={(event) => {
+            event.preventDefault()
+            navigateToPath(`/${item.slug}/`)
+          }}>
             <span>{textFromHtml(item.title.rendered)}</span>
             <Icon name="diagonal" size={16} />
           </a>
         ))}
         {cmsProducts.map((item) => (
-          <a href={pathWithBase(`/product/${item.slug}/`)} key={`product-${item.id}`} onClick={(event) => linkClick(event, `/product/${item.slug}/`)}>
+          <a href={pathWithBase(`/product/${item.slug}/`)} key={`product-${item.id}`} onClick={(event) => {
+            event.preventDefault()
+            navigateToPath(`/product/${item.slug}/`)
+          }}>
             <span>Shop: {textFromHtml(item.title.rendered)}</span>
             <Icon name="diagonal" size={16} />
           </a>
@@ -1603,11 +1554,11 @@ export default function App() {
       </div>
 
       <header className="masthead">
-        <a className="wordmark" href={pathWithBase('/')} onClick={(event) => linkClick(event, '/')} aria-label="Nano Digest home">
+        <button className="wordmark" onClick={() => openPage('home')} aria-label="Nano Digest home">
           <span className="brand-badge">
             <img src={nanoDigestLogo} alt="Nano Digest" />
           </span>
-        </a>
+        </button>
         <div className="masthead-right">
           <span>
             A small world.
@@ -1624,10 +1575,10 @@ export default function App() {
 
       <nav className="navigation glass" aria-label="Main navigation">
         <div className="nav-links">
-          <a className={page === 'home' ? 'nav-active' : ''} href={pathWithBase('/')} onClick={(event) => linkClick(event, '/')}>
+          <button className={page === 'home' ? 'nav-active' : ''} onClick={() => openPage('home')}>
             Discover
             <span />
-          </a>
+          </button>
           <button onClick={() => selectTopic('Physical Science & Technology')}>
             Physical Science
           </button>
@@ -1637,8 +1588,8 @@ export default function App() {
           <button onClick={() => scrollNewsletter()}>
             The Magazine <span className="new-tag">NEW</span>
           </button>
-          <a href={pathWithBase(pagePaths.about)} onClick={(event) => linkClick(event, pagePaths.about)}>About us</a>
-          <a href={pathWithBase(pagePaths.advertise)} onClick={(event) => linkClick(event, pagePaths.advertise)}>Advertise</a>
+          <button onClick={() => openPage('about')}>About us</button>
+          <button onClick={() => openPage('advertise')}>Advertise</button>
         </div>
 
         <div className="nav-actions">
@@ -1677,9 +1628,9 @@ export default function App() {
                 {topicName}
               </button>
             ))}
-            <a href={pathWithBase(pagePaths.about)} onClick={(event) => linkClick(event, pagePaths.about)}>About us</a>
-            <a href={pathWithBase(pagePaths.contact)} onClick={(event) => linkClick(event, pagePaths.contact)}>Contact</a>
-            <a href={pathWithBase(pagePaths.advertise)} onClick={(event) => linkClick(event, pagePaths.advertise)}>Advertise</a>
+            <button onClick={() => openPage('about')}>About us</button>
+            <button onClick={() => openPage('contact')}>Contact</button>
+            <button onClick={() => openPage('advertise')}>Advertise</button>
           </div>
         )}
       </nav>
@@ -1693,7 +1644,11 @@ export default function App() {
                   <span className="status-dot" /> THE WORLD OF NANO, IN FOCUS
                 </span>
                 <h1>
-                  Small science.<span> Limitless impact.</span>
+                  <span className="sr-only">Small science. Limitless impact.</span>
+                  <span className="headline-static" aria-hidden="true">Small science.</span>{' '}
+                  <span className="typewriter" aria-hidden="true">
+                    <Typewriter text="Limitless impact." />
+                  </span>
                 </h1>
               </div>
               <p>
@@ -1704,10 +1659,9 @@ export default function App() {
             </section>
 
             <section className="featured-grid" aria-label="Featured stories">
-              <StoryElement
-                article={articles[0]}
+              <button
                 className="hero-story"
-                onActivate={() => openStory(articles[0])}
+                onClick={() => openStory(articles[0])}
               >
                 <img
                   src={articles[0].image}
@@ -1737,7 +1691,7 @@ export default function App() {
                   </div>
                 </div>
                 <span className="image-credit">NANO DIGEST / WEB EXCLUSIVE</span>
-              </StoryElement>
+              </button>
 
               <div className="editors-picks">
                 <div className="picks-heading">
@@ -1745,11 +1699,10 @@ export default function App() {
                   <span className="four-point">✦</span>
                 </div>
                 {articles.slice(1, 3).map((article, index) => (
-                  <StoryElement
-                    article={article}
+                  <button
                     className={`pick-story glass pick-${index}`}
                     key={article.id}
-                    onActivate={() => openStory(article)}
+                    onClick={() => openStory(article)}
                   >
                     <div className="pick-image">
                       <img
@@ -1766,7 +1719,7 @@ export default function App() {
                         <Icon name="diagonal" size={18} />
                       </div>
                     </div>
-                  </StoryElement>
+                  </button>
                 ))}
               </div>
             </section>
@@ -1831,11 +1784,10 @@ export default function App() {
 
               <div className="article-grid">
                 {(showAll || topic !== 'All stories' ? filtered : filtered.slice(3, 6)).map((article) => (
-                  <StoryElement
-                    article={article}
+                  <button
                     className="article-card glass"
                     key={article.id}
-                    onActivate={() => openStory(article)}
+                    onClick={() => openStory(article)}
                   >
                     <div className="article-image">
                       <img src={article.image} alt={article.title} loading="lazy" />
@@ -1852,7 +1804,7 @@ export default function App() {
                         <span>{article.time}</span>
                       </div>
                     </div>
-                  </StoryElement>
+                  </button>
                 ))}
               </div>
 
@@ -2024,9 +1976,9 @@ export default function App() {
                 <br />
                 <strong>the smallest things can change everything.</strong>
               </p>
-              <a className="text-link" href={pathWithBase(pagePaths.about)} onClick={(event) => linkClick(event, pagePaths.about)}>
+              <button className="text-link" onClick={() => openPage('about')}>
                 Get to know us <Icon name="arrow" size={18} />
-              </a>
+              </button>
             </section>
           </>
         ) : renderInfoPage()}
@@ -2034,23 +1986,23 @@ export default function App() {
 
       <footer>
         <div className="footer-top">
-          <a className="footer-logo" href={pathWithBase('/')} onClick={(event) => linkClick(event, '/')}>
+          <button className="footer-logo" onClick={() => openPage('home')}>
             <img src={nanoDigestLogo} alt="Nano Digest" />
-          </a>
+          </button>
           <span>Science. Perspective. Possibility.</span>
           <div>
-            <a href={pathWithBase(pagePaths.contact)} onClick={(event) => linkClick(event, pagePaths.contact)}>
+            <button onClick={() => openPage('contact')}>
               Get in touch <Icon name="diagonal" size={15} />
-            </a>
-            <a href={pathWithBase(pagePaths.terms)} onClick={(event) => linkClick(event, pagePaths.terms)}>Editorial policy</a>
-            <a href={pathWithBase('/pages/')} onClick={(event) => linkClick(event, '/pages/')}>All pages</a>
-            <a href={pathWithBase('/shop/')} onClick={(event) => linkClick(event, '/shop/')}>Shop</a>
+            </button>
+            <button onClick={() => openPage('terms')}>Editorial policy</button>
+            <button onClick={() => navigateToPath('/pages/')}>All pages</button>
+            <button onClick={() => navigateToPath('/shop/')}>Shop</button>
           </div>
         </div>
         <div className="footer-bottom">
           <span>© {new Date().getFullYear()} Nano Digest. A world of possibilities.</span>
           <span>Made for curious minds.</span>
-          <a href={pathWithBase(pagePaths.privacy)} onClick={(event) => linkClick(event, pagePaths.privacy)}>Privacy & terms</a>
+          <button onClick={() => openPage('privacy')}>Privacy & terms</button>
         </div>
       </footer>
 

@@ -1041,85 +1041,64 @@ body::before {
 }
 
 /* ------------------------------------------------------------------
- * Phase 4 — semantic links replacing navigational <button> elements.
- * Keeps the existing visual design while making navigation real
- * anchor links (crawlable, copyable, open-in-new-tab capable).
+ * Hero headline typewriter (mirrors mindrevel.in headline animation).
+ * Static first sentence + an animated second sentence that types,
+ * holds, deletes and re-types with a blinking cursor.
+ * Scoped to `.intro h1` so the minified `.intro h1 span` and the
+ * mobile `display:block` rules below cannot override it.
  * ------------------------------------------------------------------ */
-.manifesto > a,
-.footer-top > div > a,
-.mobile-dropdown a {
-  display: flex;
-  align-items: center;
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
-.manifesto > a {
-  margin-left: auto;
+.intro h1 .headline-static {
+  color: inherit;
+  font-weight: inherit;
 }
 
-.mobile-dropdown a {
-  padding: 12px;
-  font-size: 12px;
+.intro h1 .typewriter {
+  color: #c91212;
+  font-weight: 400;
+  min-height: 1.2em;
+}
+
+.intro h1 .typewriter-cursor {
+  display: inline-block;
+  width: 3px;
+  height: .85em;
+  margin-left: 2px;
+  border-radius: .125rem;
+  background: #c91212;
+  vertical-align: middle;
+  animation: typewriter-blink 1s ease-in-out infinite;
+}
+
+@keyframes typewriter-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
 }
 
 @media (max-width: 600px) {
-  .nav-links > a {
-    display: none;
+  .intro h1 .typewriter {
+    display: block;
+    margin-top: 2px;
   }
 
-  .manifesto > a {
-    position: absolute;
-    bottom: 20px;
-    right: 0;
+  .intro h1 .typewriter-cursor {
+    display: inline-block;
   }
 }
 
-/* Readability — the smallest labels now render at a legible size. */
-.topline,
-.edition,
-.eyebrow,
-.glass-chip,
-.image-label,
-.hero-category,
-.category-label,
-.article-meta,
-.filter-row > button,
-.topic-links button,
-.story-count,
-.pick-number,
-.new-tag,
-.newsletter-label,
-.newsletter-form form > p,
-.footer-bottom,
-.footer-top > span,
-.text-link {
-  font-size: 10px;
-}
-
-.image-credit {
-  font-size: 9px;
-}
-
-.newsletter .eyebrow,
-.modal .eyebrow,
-.section-heading .eyebrow,
-.intro .eyebrow,
-.search-results .category-label,
-.pick-copy .article-meta,
-.article-card .article-meta {
-  font-size: 10px;
-}
-
-/* Contrast — muted copy on white and pale-red surfaces now meets WCAG AA. */
-.article-meta,
-.article-card p,
-.story-count,
-.manifesto > p,
-.footer-bottom {
-  color: #6a6262;
-}
-
-/* Focus — text fields get a visible brand-coloured focus ring. */
-.search-input:focus-within {
-  outline: 2px solid #c91212;
-  outline-offset: 3px;
+@media (prefers-reduced-motion: reduce) {
+  .intro h1 .typewriter-cursor {
+    animation: none;
+  }
 }
