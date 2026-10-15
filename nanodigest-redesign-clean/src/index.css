@@ -1039,3 +1039,87 @@ body::before {
     min-height: 250px;
   }
 }
+
+/* ------------------------------------------------------------------
+ * Phase 4 — semantic links replacing navigational <button> elements.
+ * Keeps the existing visual design while making navigation real
+ * anchor links (crawlable, copyable, open-in-new-tab capable).
+ * ------------------------------------------------------------------ */
+.manifesto > a,
+.footer-top > div > a,
+.mobile-dropdown a {
+  display: flex;
+  align-items: center;
+}
+
+.manifesto > a {
+  margin-left: auto;
+}
+
+.mobile-dropdown a {
+  padding: 12px;
+  font-size: 12px;
+}
+
+@media (max-width: 600px) {
+  .nav-links > a {
+    display: none;
+  }
+
+  .manifesto > a {
+    position: absolute;
+    bottom: 20px;
+    right: 0;
+  }
+}
+
+/* Readability — the smallest labels now render at a legible size. */
+.topline,
+.edition,
+.eyebrow,
+.glass-chip,
+.image-label,
+.hero-category,
+.category-label,
+.article-meta,
+.filter-row > button,
+.topic-links button,
+.story-count,
+.pick-number,
+.new-tag,
+.newsletter-label,
+.newsletter-form form > p,
+.footer-bottom,
+.footer-top > span,
+.text-link {
+  font-size: 10px;
+}
+
+.image-credit {
+  font-size: 9px;
+}
+
+.newsletter .eyebrow,
+.modal .eyebrow,
+.section-heading .eyebrow,
+.intro .eyebrow,
+.search-results .category-label,
+.pick-copy .article-meta,
+.article-card .article-meta {
+  font-size: 10px;
+}
+
+/* Contrast — muted copy on white and pale-red surfaces now meets WCAG AA. */
+.article-meta,
+.article-card p,
+.story-count,
+.manifesto > p,
+.footer-bottom {
+  color: #6a6262;
+}
+
+/* Focus — text fields get a visible brand-coloured focus ring. */
+.search-input:focus-within {
+  outline: 2px solid #c91212;
+  outline-offset: 3px;
+}
