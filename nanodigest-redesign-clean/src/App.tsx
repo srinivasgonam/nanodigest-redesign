@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import DOMPurify from 'dompurify'
 import nanoDigestLogo from '../assets/images/nanodigest-logo.png'
 import { contentUrl, formUrl } from './lib/api'
+import { AdSlot, adsPreviewEnabled } from './components/AdSlot'
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, '')
 
@@ -202,54 +203,39 @@ const topics = [
   'Biological Sciences & Technology',
 ]
 
-const videoEpisodes = [
-  {
-    title: 'Nanotechnology in Engineering',
-    subtitle: 'NANOENGINEERING',
-    sourceUrl: 'https://nanodigest.in/nanotechnology-in-engineering-nanoengineering-nano-tv/',
-  },
-  {
-    title: 'Nanotechnology in Materials',
-    subtitle: 'GRAPHENE',
-    sourceUrl: 'https://nanodigest.in/nanotechnology-in-materials-graphene-nano-tv/',
-  },
-  {
-    title: 'Nanotechnology in Electronics',
-    subtitle: 'NANOELECTRONICS',
-    sourceUrl: 'https://nanodigest.in/nanotechnology-in-electronics-nanoelectronics-nano-tv/',
-  },
-  {
-    title: 'Nanotechnology in Medicine',
-    subtitle: 'NANOMEDICINE',
-    sourceUrl: 'https://nanodigest.in/nanotechnology-in-medicine-nanomedicine-nano-tv/',
-  },
-  {
-    title: 'Molecular Nanotechnology',
-    subtitle: 'NANOTECHNOLOGY & IMPLEMENTATIONS',
-    sourceUrl: 'https://nanodigest.in/molecular-nanotechnology-nanotechnology-implementations-nano-tv/',
-  },
-  {
-    title: 'What are Nanoparticles?',
-    subtitle: 'NANOPARTICLES',
-    sourceUrl: 'https://nanodigest.in/what-are-nanoparticles-nano-tv/',
-  },
-  {
-    title: 'The Origin & Challenge by Richard Feynman',
-    subtitle: 'NANO TV',
-    sourceUrl: 'https://nanodigest.in/the-origin-challenge-by-richard-feynman-nano-tv/',
-  },
-  {
-    title: 'Introduction to Nanotechnology',
-    subtitle: 'NANO TV',
-    sourceUrl: 'https://nanodigest.in/introduction-to-nanotechnology-nano-tv/',
-  },
-]
-
 function textFromHtml(markup: string) {
   const element = document.createElement('div')
   element.innerHTML = markup
   return element.textContent?.replace(/\s+/g, ' ').trim() || ''
 }
+
+/**
+ * Splits sanitized article HTML at a natural boundary so a reserved ad slot can
+ * sit between two article sections. Prefers the first sub-heading past a third
+ * of the content, and falls back to a paragraph break near the midpoint.
+ * Returns a second (empty) string when no safe split point exists.
+ */
+function splitContentForAd(html: string): [string, string] {
+  if (!html) return [html, '']
+  const lower = html.toLowerCase()
+  const threshold = html.length * 0.35
+  const headingPattern = /<h2[\s>]/g
+  let splitAt = -1
+  let match: RegExpExecArray | null
+  while ((match = headingPattern.exec(lower))) {
+    if (match.index >= threshold) {
+      splitAt = match.index
+      break
+    }
+  }
+  if (splitAt === -1) {
+    const paragraphEnd = lower.lastIndexOf('</p>', Math.floor(html.length / 2))
+    if (paragraphEnd !== -1) splitAt = paragraphEnd + 4
+  }
+  if (splitAt <= 0 || splitAt >= html.length) return [html, '']
+  return [html.slice(0, splitAt), html.slice(splitAt)]
+}
+
 
 function mapWordPressPost(
   post: WordPressPost,
@@ -328,6 +314,18 @@ function Icon({ name, size = 20 }: { name: string; size?: number }) {
           <circle cx="18" cy="20" r="1" />
           <path d="M3 4h2l2.2 11.1a2 2 0 0 0 2 1.6h8.6a2 2 0 0 0 1.9-1.4L22 8H6" />
         </>
+      ) : name === 'youtube' ? (
+        <path
+          fill="currentColor"
+          stroke="none"
+          d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31.3 31.3 0 0 0 0 12a31.3 31.3 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31.3 31.3 0 0 0 24 12a31.3 31.3 0 0 0-.5-5.8ZM9.6 15.6V8.4l6.2 3.6-6.2 3.6Z"
+        />
+      ) : name === 'whatsapp' ? (
+        <path
+          fill="currentColor"
+          stroke="none"
+          d="M12.04 2A9.9 9.9 0 0 0 2.13 11.9c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22h.01a9.91 9.91 0 0 0 9.91-9.91 9.82 9.82 0 0 0-2.9-7.01A9.82 9.82 0 0 0 12.04 2Zm0 1.67a8.2 8.2 0 0 1 5.83 2.42 8.2 8.2 0 0 1 2.41 5.82c0 4.54-3.7 8.24-8.25 8.24a8.2 8.2 0 0 1-4.19-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.19 8.19 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.25-8.24Zm-2.98 4.43c-.14 0-.37.05-.56.26-.19.21-.74.72-.74 1.75s.76 2.03.86 2.17c.11.14 1.5 2.29 3.63 3.21.51.22.9.35 1.21.45.51.16.97.14 1.34.08.41-.06 1.24-.51 1.42-1 .18-.49.18-.91.13-.99-.05-.09-.19-.14-.4-.24-.21-.11-1.24-.61-1.43-.68-.19-.07-.33-.11-.47.11-.14.21-.54.68-.66.82-.12.14-.24.16-.45.05-.21-.11-.88-.32-1.68-1.03-.62-.55-1.04-1.23-1.16-1.44-.12-.21-.01-.32.09-.43.09-.09.21-.24.32-.36.11-.12.14-.21.21-.35.07-.14.04-.26-.02-.37-.05-.11-.47-1.14-.65-1.56-.17-.41-.34-.36-.47-.36l-.4-.01Z"
+        />
       ) : (
         <>
           <circle cx="12" cy="12" r="3" />
@@ -806,6 +804,8 @@ export default function App() {
       ),
     [topic],
   )
+
+  const adsEnabled = useMemo(() => adsPreviewEnabled(), [])
 
   const selectTopic = (value: string) => {
     setTopic(value)
@@ -1297,6 +1297,15 @@ export default function App() {
       .join(' / ')
     const image = cmsPost?._embedded?.['wp:featuredmedia']?.[0]?.source_url
 
+    const sanitizedMarkup = DOMPurify.sanitize(markup)
+    const isArticleDetail = Boolean(cmsPost)
+    const showArticleAds = adsEnabled && isArticleDetail
+    const [contentFirst, contentSecond] = showArticleAds
+      ? splitContentForAd(sanitizedMarkup)
+      : [sanitizedMarkup, '']
+    const showInContentAd = showArticleAds && contentSecond.length > 0
+    const showSidebarAd = showArticleAds && sanitizedMarkup.length > 1500
+
     if (!title) {
       return (
         <section className="page-panel glass">
@@ -1308,33 +1317,43 @@ export default function App() {
 
     return (
       <article className="page-panel glass cms-detail">
-        <div className="page-heading">
-          <span className="eyebrow"><span className="status-dot" />{categoryName || 'NANO DIGEST'}</span>
-          <h1>{textFromHtml(title)}</h1>
-          {cmsPost && (
-            <div className="article-meta cms-meta">
-              <span>{new Intl.DateTimeFormat('en', { dateStyle: 'long' }).format(new Date(cmsPost.date))}</span>
+        <div className={`article-layout${showSidebarAd ? ' article-layout--with-aside' : ''}`}>
+          <div className="article-main">
+            <div className="page-heading">
+              <span className="eyebrow"><span className="status-dot" />{categoryName || 'NANO DIGEST'}</span>
+              <h1>{textFromHtml(title)}</h1>
+              {cmsPost && (
+                <div className="article-meta cms-meta">
+                  <span>{new Intl.DateTimeFormat('en', { dateStyle: 'long' }).format(new Date(cmsPost.date))}</span>
+                </div>
+              )}
             </div>
+            {image && <img className="cms-detail-image" src={image} alt={textFromHtml(title)} />}
+            {cmsProduct && (
+              <div className="shop-purchase-row">
+                <strong>{formattedProductPrice || 'Price currently unavailable'}</strong>
+                <button className="primary-button" onClick={() => addToCart()} disabled={!storeProduct}>
+                  Add to cart <Icon name="cart" size={17} />
+                </button>
+              </div>
+            )}
+            <div className="cms-content" dangerouslySetInnerHTML={{ __html: contentFirst }} />
+            {showInContentAd && <AdSlot placement="article-in-content" />}
+            {contentSecond && (
+              <div className="cms-content" dangerouslySetInnerHTML={{ __html: contentSecond }} />
+            )}
+            {originalUrl && (
+              <a className="secondary-button cms-source" href={originalUrl} target="_blank" rel="noreferrer">
+                View original on Nano Digest <Icon name="diagonal" size={15} />
+              </a>
+            )}
+          </div>
+          {showSidebarAd && (
+            <aside className="article-aside" aria-label="Article advertisement">
+              <AdSlot placement="article-sidebar" />
+            </aside>
           )}
         </div>
-        {image && <img className="cms-detail-image" src={image} alt={textFromHtml(title)} />}
-        {cmsProduct && (
-          <div className="shop-purchase-row">
-            <strong>{formattedProductPrice || 'Price currently unavailable'}</strong>
-            <button className="primary-button" onClick={() => addToCart()} disabled={!storeProduct}>
-              Add to cart <Icon name="cart" size={17} />
-            </button>
-          </div>
-        )}
-        <div
-          className="cms-content"
-          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(markup) }}
-        />
-        {originalUrl && (
-          <a className="secondary-button cms-source" href={originalUrl} target="_blank" rel="noreferrer">
-            View original on Nano Digest <Icon name="diagonal" size={15} />
-          </a>
-        )}
       </article>
     )
   }
@@ -1410,7 +1429,7 @@ export default function App() {
   )
 
   const renderCheckoutRoute = () => (
-    <section className="page-panel glass checkout-page">
+    <section className="page-panel glass checkout-page checkout-page--flow">
       <div className="page-heading">
         <span className="eyebrow">NANO DIGEST / CHECKOUT</span>
         <h1>Delivery details</h1>
@@ -1466,6 +1485,7 @@ export default function App() {
           <h1>{category ? textFromHtml(category.name) : 'Category stories'}</h1>
           <p>{category ? `${category.count.toLocaleString()} published stories` : 'Browse published stories by category.'}</p>
         </div>
+        <AdSlot placement="archive-banner" />
         <div className="article-grid">
           {articles.map((article) => (
             <button className="article-card glass" key={article.id} onClick={() => openStory(article)}>
@@ -1534,7 +1554,9 @@ export default function App() {
 
       <header className="masthead">
         <button className="wordmark" onClick={() => openPage('home')} aria-label="Nano Digest home">
-          <img src={nanoDigestLogo} alt="Nano Digest" />
+          <span className="brand-badge">
+            <img src={nanoDigestLogo} alt="Nano Digest" />
+          </span>
         </button>
         <div className="masthead-right">
           <span>
@@ -1701,6 +1723,8 @@ export default function App() {
               </div>
             </section>
 
+            <AdSlot placement="home-leaderboard" />
+
             <section className="topics-strip" aria-label="Explore topics">
               <div className="topics-title">
                 <Icon name="atom" size={23} />
@@ -1798,58 +1822,66 @@ export default function App() {
               )}
             </section>
 
-            <section className="nano-tv-section" aria-labelledby="nano-tv-title">
+            <section className="channels-section" aria-labelledby="channels-title">
               <div className="section-heading">
                 <div>
-                  <span className="eyebrow">NANO DIGEST VIDEO</span>
-                  <h2 id="nano-tv-title">Nano TV</h2>
+                  <span className="eyebrow">FOLLOW NANO DIGEST</span>
+                  <h2 id="channels-title">Science, wherever you scroll.</h2>
                 </div>
-                <a
-                  className="text-link"
-                  href="https://bit.ly/3y20aNh"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Subscribe on YouTube <Icon name="diagonal" size={18} />
-                </a>
               </div>
 
-              <div className="nano-tv-grid">
-                <div className="nano-tv-feature">
-                  <iframe
-                    src="https://www.youtube-nocookie.com/embed/aTxe7UblnRU?rel=0"
-                    title="Nanotechnology in Engineering - Nano TV"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    referrerPolicy="strict-origin-when-cross-origin"
-                    allowFullScreen
-                  />
-                  <div className="nano-tv-caption">
-                    <span className="category-label">NOW PLAYING</span>
-                    <h3>{videoEpisodes[0].title}</h3>
-                    <a href={videoEpisodes[0].sourceUrl} target="_blank" rel="noreferrer">
-                      Episode details <Icon name="diagonal" size={15} />
+              <div className="channel-grid">
+                <article className="channel-card glass channel-youtube">
+                  <span className="channel-icon" aria-hidden="true">
+                    <Icon name="youtube" size={28} />
+                  </span>
+                  <span className="channel-kicker">YOUTUBE CHANNEL</span>
+                  <h3>Nano TV — The Science Channel</h3>
+                  <p>
+                    Watch clear, visual explainers on nanotechnology, materials,
+                    and the science shaping our world at the smallest scale.
+                  </p>
+                  <div className="channel-actions">
+                    <a
+                      className="primary-button channel-button"
+                      href="https://youtube.com/@nanotv-thesciencechannel?si=Zs7zXoyx-1tl05OL"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Icon name="youtube" size={18} /> Watch on YouTube
+                    </a>
+                    <a
+                      className="secondary-button channel-button"
+                      href="https://youtube.com/@nanotv-thesciencechannel?si=Zs7zXoyx-1tl05OL"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Subscribe on YouTube
                     </a>
                   </div>
-                </div>
+                </article>
 
-                <div className="nano-tv-episodes" aria-label="Nano TV episodes">
-                  {videoEpisodes.map((episode, index) => (
+                <article className="channel-card glass channel-whatsapp">
+                  <span className="channel-icon" aria-hidden="true">
+                    <Icon name="whatsapp" size={26} />
+                  </span>
+                  <span className="channel-kicker">WHATSAPP CHANNEL</span>
+                  <h3>NANO DIGEST — The Science Channel</h3>
+                  <p>
+                    Follow the science channel on WhatsApp for updates, new
+                    stories, and the latest from Nano Digest.
+                  </p>
+                  <div className="channel-actions">
                     <a
-                      className="nano-tv-episode"
-                      href={episode.sourceUrl}
-                      key={episode.sourceUrl}
+                      className="primary-button channel-button"
+                      href="https://whatsapp.com/channel/0029Vb8jZTlEVccGbSYeAD2V"
                       target="_blank"
-                      rel="noreferrer"
+                      rel="noopener noreferrer"
                     >
-                      <span className="episode-number">0{index + 1}</span>
-                      <span className="episode-copy">
-                        <strong>{episode.title}</strong>
-                        <small>{episode.subtitle}</small>
-                      </span>
-                      <Icon name="diagonal" size={18} />
+                      <Icon name="whatsapp" size={18} /> Follow on WhatsApp
                     </a>
-                  ))}
-                </div>
+                  </div>
+                </article>
               </div>
             </section>
 

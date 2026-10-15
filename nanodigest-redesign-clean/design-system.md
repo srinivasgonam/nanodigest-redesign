@@ -12,12 +12,17 @@ A modern editorial interface for Nano Digest, focused on nanotechnology, researc
 - High readability
 
 ## Colors
-- Background: #F6F8F5
-- Primary: #173D33
-- Text: #203C36
-- Muted: #718079
-- Accent: #D9EE93
-- Border: #DCE3DB
+- Background: #FAF6F6
+- Primary (brand): #C91212
+- Primary dark (headings): #8D0F10
+- Text: #2B2223
+- Muted: #7A6F70
+- Accent (blush): #F6C9C9
+- Border: #ECDEDE
+
+Brand red (#C91212) matches the production site's accent colour. WhatsApp greens
+(#49D17F/#0F8A5F) and YouTube reds (#D90B00/#FF5147) are retained for their
+respective channel icons; success/error states keep their semantic colours.
 
 ## Typography
 - DM Sans: body/UI
