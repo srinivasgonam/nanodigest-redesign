@@ -1042,10 +1042,10 @@ body::before {
 
 /* ------------------------------------------------------------------
  * Hero headline typewriter (mirrors mindrevel.in headline animation).
- * Static first sentence + an animated second sentence that types,
- * holds, deletes and re-types with a blinking cursor.
+ * The complete sentence "Small science. Limitless impact." types out
+ * once, left to right, then stays visible with a blinking cursor.
  * Scoped to `.intro h1` so the minified `.intro h1 span` and the
- * mobile `display:block` rules below cannot override it.
+ * mobile `display:block` rules cannot override it.
  * ------------------------------------------------------------------ */
 .sr-only {
   position: absolute;
@@ -1059,23 +1059,41 @@ body::before {
   border: 0;
 }
 
-.intro h1 .headline-static {
+.intro h1 .typewriter {
+  display: inline-grid;
+  grid-template-columns: 1fr;
+  align-items: baseline;
+  vertical-align: baseline;
   color: inherit;
   font-weight: inherit;
+  position: relative;
+  line-height: inherit;
 }
 
-.intro h1 .typewriter {
+.intro h1 .typewriter-reserve {
+  grid-area: 1 / 1;
+  visibility: hidden;
+  pointer-events: none;
+  user-select: none;
+}
+
+.intro h1 .typewriter-shown {
+  grid-area: 1 / 1;
+  vertical-align: baseline;
+  line-height: inherit;
+}
+
+.intro h1 .typewriter-accent {
   color: #c91212;
   font-weight: 400;
-  min-height: 1.2em;
 }
 
 .intro h1 .typewriter-cursor {
   display: inline-block;
   width: 3px;
-  height: .85em;
+  height: 0.85em;
   margin-left: 2px;
-  border-radius: .125rem;
+  border-radius: 0.125rem;
   background: #c91212;
   vertical-align: middle;
   animation: typewriter-blink 1s ease-in-out infinite;

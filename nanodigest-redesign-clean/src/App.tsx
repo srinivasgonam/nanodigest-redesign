@@ -1645,9 +1645,8 @@ export default function App() {
                 </span>
                 <h1>
                   <span className="sr-only">Small science. Limitless impact.</span>
-                  <span className="headline-static" aria-hidden="true">Small science.</span>{' '}
                   <span className="typewriter" aria-hidden="true">
-                    <Typewriter text="Limitless impact." />
+                    <Typewriter text="Small science. Limitless impact." accent="Limitless impact." />
                   </span>
                 </h1>
               </div>
