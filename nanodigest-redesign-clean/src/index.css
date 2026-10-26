@@ -767,7 +767,7 @@
 
 /* Verso dot-globe effect */
 .intro {
-  --nano-globe-size: clamp(128px, 15vw, 184px);
+  --nano-globe-size: clamp(100px, 10vw, 140px);
   display: grid;
   grid-template-columns: minmax(0, 1.3fr) var(--nano-globe-size) minmax(240px, .9fr);
   gap: clamp(18px, 2.5vw, 36px);
