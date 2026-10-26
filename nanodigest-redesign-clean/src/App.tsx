@@ -1638,6 +1638,26 @@ export default function App() {
       <main>
         {isShopRoute ? renderShopRoute() : isCartRoute ? renderCartRoute() : isCheckoutRoute ? renderCheckoutRoute() : isAccountRoute ? renderAccountRoute() : isCmsDetailRoute ? renderCmsDetail() : isCategoryRoute ? renderCategoryArchive() : isDirectoryRoute ? renderPageDirectory() : page === 'home' ? (
           <>
+            <div className="home-channel-links" aria-label="Follow Nano Digest channels">
+              <span>FOLLOW NANO DIGEST</span>
+              <a
+                className="home-channel-link home-channel-youtube"
+                href="https://youtube.com/@nanotv-thesciencechannel?si=Zs7zXoyx-1tl05OL"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Icon name="youtube" size={17} /> YouTube
+              </a>
+              <a
+                className="home-channel-link home-channel-whatsapp"
+                href="https://whatsapp.com/channel/0029Vb8jZTlEVccGbSYeAD2V"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Icon name="whatsapp" size={17} /> WhatsApp
+              </a>
+            </div>
+
             <section className="intro">
               <div>
                 <span className="eyebrow">
@@ -1820,69 +1840,6 @@ export default function App() {
                   </button>
                 </div>
               )}
-            </section>
-
-            <section className="channels-section" aria-labelledby="channels-title">
-              <div className="section-heading">
-                <div>
-                  <span className="eyebrow">FOLLOW NANO DIGEST</span>
-                  <h2 id="channels-title">Science, wherever you scroll.</h2>
-                </div>
-              </div>
-
-              <div className="channel-grid">
-                <article className="channel-card glass channel-youtube">
-                  <span className="channel-icon" aria-hidden="true">
-                    <Icon name="youtube" size={28} />
-                  </span>
-                  <span className="channel-kicker">YOUTUBE CHANNEL</span>
-                  <h3>Nano TV — The Science Channel</h3>
-                  <p>
-                    Watch clear, visual explainers on nanotechnology, materials,
-                    and the science shaping our world at the smallest scale.
-                  </p>
-                  <div className="channel-actions">
-                    <a
-                      className="primary-button channel-button"
-                      href="https://youtube.com/@nanotv-thesciencechannel?si=Zs7zXoyx-1tl05OL"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <Icon name="youtube" size={18} /> Watch on YouTube
-                    </a>
-                    <a
-                      className="secondary-button channel-button"
-                      href="https://youtube.com/@nanotv-thesciencechannel?si=Zs7zXoyx-1tl05OL"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      Subscribe on YouTube
-                    </a>
-                  </div>
-                </article>
-
-                <article className="channel-card glass channel-whatsapp">
-                  <span className="channel-icon" aria-hidden="true">
-                    <Icon name="whatsapp" size={26} />
-                  </span>
-                  <span className="channel-kicker">WHATSAPP CHANNEL</span>
-                  <h3>NANO DIGEST — The Science Channel</h3>
-                  <p>
-                    Follow the science channel on WhatsApp for updates, new
-                    stories, and the latest from Nano Digest.
-                  </p>
-                  <div className="channel-actions">
-                    <a
-                      className="primary-button channel-button"
-                      href="https://whatsapp.com/channel/0029Vb8jZTlEVccGbSYeAD2V"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      <Icon name="whatsapp" size={18} /> Follow on WhatsApp
-                    </a>
-                  </div>
-                </article>
-              </div>
             </section>
 
             <section className="newsletter" id="newsletter">

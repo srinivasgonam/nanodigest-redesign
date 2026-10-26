@@ -292,91 +292,6 @@
   min-width: 180px;
 }
 
-.channels-section {
-  margin: 58px 0 68px;
-}
-
-.channels-section .section-heading {
-  margin-bottom: 22px;
-}
-
-.channels-section .section-heading h2 {
-  margin: 7px 0 0;
-  font-family: 'Manrope', sans-serif;
-  font-size: 31px;
-  letter-spacing: -1px;
-  color: var(--brand-dark);
-}
-
-.channel-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 24px;
-  align-items: stretch;
-}
-
-.channel-card {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 30px 30px 28px;
-  border-radius: 18px;
-}
-
-.channel-icon {
-  width: 54px;
-  height: 54px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 15px;
-  color: #fff;
-}
-
-.channel-youtube .channel-icon {
-  background: linear-gradient(135deg, #ff5147, #d90b00);
-}
-
-.channel-whatsapp .channel-icon {
-  background: linear-gradient(135deg, #49d17f, #0f8a5f);
-}
-
-.channel-kicker {
-  color: #875d5d;
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 1.6px;
-}
-
-.channel-card h3 {
-  margin: 0;
-  color: var(--brand-dark);
-  font-family: 'Manrope', sans-serif;
-  font-size: 23px;
-  letter-spacing: -.4px;
-  line-height: 1.2;
-}
-
-.channel-card p {
-  margin: 0;
-  color: #5a4646;
-  font-size: 14px;
-  line-height: 1.75;
-}
-
-.channel-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-top: auto;
-  padding-top: 22px;
-}
-
-.channel-button {
-  min-height: 46px;
-  padding: 12px 22px;
-}
-
 .source-link {
   width: fit-content;
   display: inline-flex;
@@ -706,40 +621,6 @@
     -webkit-mask-composite: xor;
     mask-composite: exclude;
     pointer-events: none;
-  }
-}
-
-@media (max-width: 800px) {
-  .channel-grid {
-    grid-template-columns: 1fr;
-    gap: 18px;
-  }
-}
-
-@media (max-width: 600px) {
-  .channels-section {
-    margin: 42px 0 48px;
-  }
-
-  .channels-section .section-heading h2 {
-    font-size: 27px;
-  }
-
-  .channel-card {
-    padding: 24px 22px 22px;
-  }
-
-  .channel-card h3 {
-    font-size: 21px;
-  }
-
-  .channel-actions {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .channel-button {
-    width: 100%;
   }
 }
 
@@ -1118,5 +999,67 @@ body::before {
 @media (prefers-reduced-motion: reduce) {
   .intro h1 .typewriter-cursor {
     animation: none;
+  }
+}
+
+.home-channel-links {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin: 10px 0 0;
+}
+
+.home-channel-links > span {
+  margin-right: 4px;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
+}
+
+.home-channel-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 13px;
+  border: 1px solid rgba(201, 18, 18, .12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .68);
+  box-shadow: 0 4px 14px rgba(100, 40, 40, .06);
+  font-size: 11px;
+  font-weight: 600;
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.home-channel-link:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 7px 18px rgba(100, 40, 40, .1);
+}
+
+.home-channel-youtube {
+  color: #b51515;
+}
+
+.home-channel-whatsapp {
+  color: #16804a;
+}
+
+@media (max-width: 600px) {
+  .home-channel-links {
+    justify-content: center;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .home-channel-links > span {
+    font-size: 8px;
+    letter-spacing: .8px;
+  }
+
+  .home-channel-link {
+    gap: 5px;
+    padding: 8px 10px;
+    font-size: 10px;
   }
 }
