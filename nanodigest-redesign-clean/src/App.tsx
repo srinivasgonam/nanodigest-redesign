@@ -1646,7 +1646,7 @@ export default function App() {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <Icon name="youtube" size={17} /> YouTube
+                <Icon name="youtube" size={20} /> YouTube
               </a>
               <a
                 className="home-channel-link home-channel-whatsapp"
@@ -1654,7 +1654,7 @@ export default function App() {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <Icon name="whatsapp" size={17} /> WhatsApp
+                <Icon name="whatsapp" size={20} /> WhatsApp
               </a>
             </div>
 
