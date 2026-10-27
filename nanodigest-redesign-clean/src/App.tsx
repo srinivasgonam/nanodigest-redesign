@@ -1561,26 +1561,27 @@ export default function App() {
             </span>
           </button>
           <div className="masthead-social" aria-label="Follow Nano Digest channels">
-            <a
-              className="masthead-social-link masthead-social-youtube"
-              href="https://youtube.com/@nanotv-thesciencechannel?si=Zs7zXoyx-1tl05OL"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="YouTube"
-            >
-              <Icon name="youtube" size={18} />
-              <span>YouTube</span>
-            </a>
-            <a
-              className="masthead-social-link masthead-social-whatsapp"
-              href="https://whatsapp.com/channel/0029Vb8jZTlEVccGbSYeAD2V"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="WhatsApp"
-            >
-              <Icon name="whatsapp" size={18} />
-              <span>WhatsApp</span>
-            </a>
+            <span className="masthead-social-label">FOLLOW NANO DIGEST</span>
+            <div className="masthead-social-links">
+              <a
+                className="masthead-social-link masthead-social-youtube"
+                href="https://youtube.com/@nanotv-thesciencechannel?si=Zs7zXoyx-1tl05OL"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Icon name="youtube" size={20} />
+                <span>YouTube</span>
+              </a>
+              <a
+                className="masthead-social-link masthead-social-whatsapp"
+                href="https://whatsapp.com/channel/0029Vb8jZTlEVccGbSYeAD2V"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Icon name="whatsapp" size={20} />
+                <span>WhatsApp</span>
+              </a>
+            </div>
           </div>
         </div>
         <div className="masthead-right">
