@@ -1366,29 +1366,67 @@ export default function App() {
         <h1>Shop</h1>
         <p>Books and resources from Nano Digest.</p>
       </div>
-      {!storeProductsLoaded ? (
-        <p className="catalog-loading">Loading shop…</p>
-      ) : storeProduct ? (
-        <article className="shop-product">
-          <img src={storeProduct.images[0]?.src || photo('photo-1532012197267-da84d127e765')} alt={storeProduct.images[0]?.alt || storeProduct.name} />
-          <div className="shop-product-copy">
+      <div className="shop-grid">
+        <article className="shop-product-card">
+          <div className="shop-product-card-media">
+            <img
+              src="https://nanodigest.in/wp-content/uploads/2022/10/ENSNT-Main-scaled.jpg"
+              alt="Essentials of Nanoscience and Nanotechnology book cover"
+              loading="lazy"
+            />
+          </div>
+          <div className="shop-product-card-copy">
             <span className="category-label">NANO DIGEST BOOKS</span>
-            <h2>{storeProduct.name}</h2>
-            <div className="cms-content" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(storeProduct.short_description || storeProduct.description) }} />
-            <strong className="shop-price">{formattedProductPrice}</strong>
+            <span className="shop-sale-badge">SALE</span>
+            <h2>Essentials of Nanoscience and Nanotechnology</h2>
+            <div className="shop-price-row">
+              <del className="shop-price-original">₹1,450</del>
+              <strong className="shop-price-current">₹1,250</strong>
+            </div>
+            <p className="shop-product-description">
+              A comprehensive guide covering the fundamentals and applications of nanoscience and nanotechnology.
+            </p>
             <div className="cta-row">
-              <button className="primary-button" onClick={() => addToCart()}>
-                Add to cart <Icon name="cart" size={17} />
-              </button>
-              <button className="secondary-button" onClick={() => navigateToPath('/cart/')}>
-                View cart ({cartQuantity})
+              <a
+                className="primary-button"
+                href="https://nanodigest.in/product/essentials-of-nanoscience-and-nanotechnology/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                View Details / Buy Now <Icon name="diagonal" size={16} />
+              </a>
+              <button className="secondary-button" onClick={() => navigateToPath('/home')}>
+                Back to home
               </button>
             </div>
           </div>
         </article>
-      ) : (
-        <div className="alert error">The shop catalog is temporarily unavailable.</div>
-      )}
+        {!storeProductsLoaded ? null : storeProduct ? (
+          <article className="shop-product-card">
+            <div className="shop-product-card-media">
+              <img
+                src={storeProduct.images[0]?.src || photo('photo-1532012197267-da84d127e765')}
+                alt={storeProduct.images[0]?.alt || storeProduct.name}
+                loading="lazy"
+              />
+            </div>
+            <div className="shop-product-card-copy">
+              <span className="category-label">NANO DIGEST BOOKS</span>
+              <h2>{storeProduct.name}</h2>
+              <strong className="shop-price-current">{formattedProductPrice}</strong>
+              <div className="cms-content" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(storeProduct.short_description || storeProduct.description) }} />
+              <div className="cta-row">
+                <button className="primary-button" onClick={() => addToCart()}>
+                  Add to cart <Icon name="cart" size={17} />
+                </button>
+                <button className="secondary-button" onClick={() => navigateToPath('/cart/')}>
+                  View cart ({cartQuantity})
+                </button>
+              </div>
+            </div>
+          </article>
+        ) : null}
+      </div>
     </section>
   )
 
