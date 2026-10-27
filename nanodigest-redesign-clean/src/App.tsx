@@ -1554,11 +1554,35 @@ export default function App() {
       </div>
 
       <header className="masthead">
-        <button className="wordmark" onClick={() => openPage('home')} aria-label="Nano Digest home">
-          <span className="brand-badge">
-            <img src={nanoDigestLogo} alt="Nano Digest" />
-          </span>
-        </button>
+        <div className="masthead-left">
+          <button className="wordmark" onClick={() => openPage('home')} aria-label="Nano Digest home">
+            <span className="brand-badge">
+              <img src={nanoDigestLogo} alt="Nano Digest" />
+            </span>
+          </button>
+          <div className="masthead-social" aria-label="Follow Nano Digest channels">
+            <a
+              className="masthead-social-link masthead-social-youtube"
+              href="https://youtube.com/@nanotv-thesciencechannel?si=Zs7zXoyx-1tl05OL"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="YouTube"
+            >
+              <Icon name="youtube" size={18} />
+              <span>YouTube</span>
+            </a>
+            <a
+              className="masthead-social-link masthead-social-whatsapp"
+              href="https://whatsapp.com/channel/0029Vb8jZTlEVccGbSYeAD2V"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="WhatsApp"
+            >
+              <Icon name="whatsapp" size={18} />
+              <span>WhatsApp</span>
+            </a>
+          </div>
+        </div>
         <div className="masthead-right">
           <span>
             A small world.
@@ -1638,25 +1662,6 @@ export default function App() {
       <main>
         {isShopRoute ? renderShopRoute() : isCartRoute ? renderCartRoute() : isCheckoutRoute ? renderCheckoutRoute() : isAccountRoute ? renderAccountRoute() : isCmsDetailRoute ? renderCmsDetail() : isCategoryRoute ? renderCategoryArchive() : isDirectoryRoute ? renderPageDirectory() : page === 'home' ? (
           <>
-            <div className="home-channel-links" aria-label="Follow Nano Digest channels">
-              <span>FOLLOW NANO DIGEST</span>
-              <a
-                className="home-channel-link home-channel-youtube"
-                href="https://youtube.com/@nanotv-thesciencechannel?si=Zs7zXoyx-1tl05OL"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Icon name="youtube" size={20} /> YouTube
-              </a>
-              <a
-                className="home-channel-link home-channel-whatsapp"
-                href="https://whatsapp.com/channel/0029Vb8jZTlEVccGbSYeAD2V"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Icon name="whatsapp" size={20} /> WhatsApp
-              </a>
-            </div>
 
             <section className="intro">
               <div>
