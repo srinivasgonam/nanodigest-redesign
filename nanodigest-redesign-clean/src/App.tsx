@@ -1,7 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { type ReactElement, useEffect, useMemo, useRef, useState } from 'react'
 import DOMPurify from 'dompurify'
 import nanoDigestLogo from '../assets/images/nanodigest-logo.png'
 import { contentUrl, formUrl } from './lib/api'
+import {
+  curatedHomepageStories,
+  resolveArticleImage,
+  sampleArticles,
+} from './lib/homepageContent.js'
 import { AdSlot, adsPreviewEnabled } from './components/AdSlot'
 import { Typewriter } from './components/Typewriter'
 
@@ -102,99 +107,10 @@ type FormStatus = {
   message: string
 } | null
 
+const ARTICLE_IMAGE_PLACEHOLDER = nanoDigestLogo
+
 const photo = (id: string, width = 900) =>
   `https://images.unsplash.com/${id}?auto=format&fit=crop&w=${width}&q=85`
-
-const sampleArticles: Article[] = [
-  {
-    id: 1,
-    category: 'Web Exclusive',
-    title: 'Helium-3 and Nanotechnology',
-    description:
-      'A closer look at helium-3, clean-energy research, and the possibilities nanotechnology may offer.',
-    image: photo('photo-1631556097152-c39479bbff93', 1600),
-    time: '6 min read',
-    date: 'June 25, 2026',
-    sourceUrl: 'https://nanodigest.in/helium-3-and-nanotechnology/',
-  },
-  {
-    id: 2,
-    category: 'Web Exclusive',
-    title: 'Ethanol vs Gasoline, A Balanced Look',
-    description:
-      'A balanced comparison of ethanol and gasoline as energy sources.',
-    image: photo('photo-1629721270535-c67f2ab1243c'),
-    time: '5 min read',
-    date: 'June 16, 2026',
-    sourceUrl: 'https://nanodigest.in/ethanol-vs-gasoline-a-balanced-look/',
-  },
-  {
-    id: 3,
-    category: 'Material Science & Technology',
-    title: 'Smallest Semiconducting Nanotubes',
-    description:
-      'A closer look at the science behind the smallest semiconducting nanotubes.',
-    image: photo('photo-1614308460927-5024ba2e1dcb'),
-    time: '5 min read',
-    date: 'June 5, 2026',
-    sourceUrl: 'https://nanodigest.in/smallest-semiconducting-nanotubes/',
-  },
-  {
-    id: 4,
-    category: 'Physical Science & Technology',
-    title: 'Whisky chemistry could help power small machines',
-    description:
-      'Researchers are exploring how chemistry found in whisky could help power small machines.',
-    image: photo('photo-1606206873764-fd15e242df52'),
-    time: '5 min read',
-    date: 'June 4, 2026',
-    sourceUrl: 'https://nanodigest.in/whisky-chemistry-could-help-power-small-machines/',
-  },
-  {
-    id: 5,
-    category: 'Physical Science & Technology',
-    title: 'Moiré 2D materials without stacking & twisting',
-    description:
-      'An atomic-scale approach to creating moiré materials without stacking and twisting layers.',
-    image: photo('photo-1629721270535-c67f2ab1243c'),
-    time: '6 min read',
-    date: 'June 4, 2026',
-    sourceUrl: 'https://nanodigest.in/moire-2d-materials-without-stacking-tiny-structures-at-the-atomic-level-that-can-give-materials-special-quantum-properties-twisting/',
-  },
-  {
-    id: 6,
-    category: 'Physical Science & Technology',
-    title: 'Microrobots repair spinal cord',
-    description:
-      'A report on research exploring microrobots as a tool for spinal-cord repair.',
-    image: photo('photo-1630959305606-3123a081dada'),
-    time: '5 min read',
-    date: 'June 2, 2026',
-    sourceUrl: 'https://nanodigest.in/microrobots-repair-spinal-cord/',
-  },
-  {
-    id: 7,
-    category: 'Biological Sciences & Technology',
-    title: 'Vitamin D analog helps break down the protection of pancreatic cancer',
-    description:
-      'A clinical trial investigates a vitamin D analog and the protective environment around pancreatic cancer.',
-    image: photo('photo-1631556097152-c39479bbff93'),
-    time: '6 min read',
-    date: 'June 1, 2026',
-    sourceUrl: 'https://nanodigest.in/vitamin-d-analog-helps-break-down-the-protection-of-pancreatic-cancer-in-a-clinical-trial/',
-  },
-  {
-    id: 8,
-    category: 'Biological Sciences & Technology',
-    title: 'Nanotechnology is making diabetes care easier',
-    description:
-      'How nanotechnology research is being applied to tools and approaches for diabetes care.',
-    image: photo('photo-1630959305606-3123a081dada'),
-    time: '5 min read',
-    date: 'May 25, 2026',
-    sourceUrl: 'https://nanodigest.in/nanotechnology-is-making-diabetes-care-easier/',
-  },
-]
 
 const topics = [
   'All stories',
@@ -245,16 +161,18 @@ function mapWordPressPost(
   const categoryNames = post.categories
     .map((id) => categories.find((category) => category.id === id)?.name)
     .filter((name): name is string => Boolean(name))
+  const postTitle = textFromHtml(post.title.rendered)
 
   return {
     id: post.id,
     slug: post.slug,
     category: categoryNames.map(textFromHtml).join(', ') || 'Nano Digest',
-    title: textFromHtml(post.title.rendered),
+    title: postTitle,
     description: textFromHtml(post.excerpt.rendered),
-    image:
-      post._embedded?.['wp:featuredmedia']?.[0]?.source_url ||
-      sampleArticles[post.id % sampleArticles.length].image,
+    image: resolveArticleImage(post, {
+      placeholder: ARTICLE_IMAGE_PLACEHOLDER,
+      title: postTitle,
+    }),
     time: 'Open story',
     date: new Intl.DateTimeFormat('en', {
       month: 'long',
@@ -969,7 +887,7 @@ export default function App() {
   }
 
   const renderInfoPage = () => {
-    const pageContent: Record<PageKey, JSX.Element> = {
+    const pageContent: Record<PageKey, ReactElement> = {
       home: <></>,
       about: (
         <section className="page-panel glass">
@@ -1724,11 +1642,11 @@ export default function App() {
             <section className="featured-grid" aria-label="Featured stories">
               <button
                 className="hero-story"
-                onClick={() => openStory(articles[0])}
+                onClick={() => openStory(curatedHomepageStories.hero)}
               >
                 <img
-                  src={articles[0].image}
-                  alt={articles[0].title}
+                  src={curatedHomepageStories.hero.image}
+                  alt={curatedHomepageStories.hero.title}
                 />
                 <div className="hero-shade" />
                 <div className="hero-top">
@@ -1739,11 +1657,11 @@ export default function App() {
                 </div>
                 <div className="hero-content glass">
                   <div className="hero-category">
-                    {articles[0].category.toUpperCase()} <span>•</span>{' '}
-                    {articles[0].time.toUpperCase()}
+                    {curatedHomepageStories.hero.category.toUpperCase()} <span>•</span>{' '}
+                    {curatedHomepageStories.hero.time.toUpperCase()}
                   </div>
-                  <h2>{articles[0].title}</h2>
-                  <p>{articles[0].description}</p>
+                  <h2>{curatedHomepageStories.hero.title}</h2>
+                  <p>{curatedHomepageStories.hero.description}</p>
                   <div className="hero-bottom">
                     <span>
                       Explore the story <Icon name="arrow" size={18} />
@@ -1761,7 +1679,7 @@ export default function App() {
                   <span className="eyebrow">THE EDITOR’S PICK</span>
                   <span className="four-point">✦</span>
                 </div>
-                {articles.slice(1, 3).map((article, index) => (
+                {curatedHomepageStories.picks.map((article, index) => (
                   <button
                     className={`pick-story glass pick-${index}`}
                     key={article.id}

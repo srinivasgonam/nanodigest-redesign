@@ -22,7 +22,7 @@ export function Typewriter({
 }: TypewriterProps) {
   const reduceMotion = useRef(prefersReducedMotion()).current
   const [count, setCount] = useState(reduceMotion ? text.length : 0)
-  const timerRef = useRef<number | undefined>()
+  const timerRef = useRef<number | undefined>(undefined)
 
   useEffect(() => {
     if (reduceMotion) {
