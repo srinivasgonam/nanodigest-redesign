@@ -120,6 +120,14 @@ const topics = [
   'Biological Sciences & Technology',
 ]
 
+const categoryLinks = [
+  { label: 'Biological Science & Technology', slug: 'biological-science-technology' },
+  { label: 'Chemical Science & Technology', slug: 'chemical-science-technology' },
+  { label: 'Material Science & Technology', slug: 'material-science-technology' },
+  { label: 'Physical Science & Technology', slug: 'physical-science-technology' },
+  { label: 'Innovations & Education', slug: 'innovations-education' },
+]
+
 function textFromHtml(markup: string) {
   const element = document.createElement('div')
   element.innerHTML = markup
@@ -222,6 +230,8 @@ function Icon({ name, size = 20 }: { name: string; size?: number }) {
         <path d="m6 6 12 12M6 18 18 6" />
       ) : name === 'menu' ? (
         <path d="M4 7h16M4 12h16M4 17h16" />
+      ) : name === 'chevron' ? (
+        <path d="m6 9 6 6 6-6" />
       ) : name === 'mail' ? (
         <>
           <rect x="3" y="5" width="18" height="14" rx="2" />
@@ -294,6 +304,7 @@ export default function App() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [query, setQuery] = useState('')
   const [menuOpen, setMenuOpen] = useState(false)
+  const [categoriesOpen, setCategoriesOpen] = useState(false)
   const [showAll, setShowAll] = useState(false)
   const [newsletterForm, setNewsletterForm] = useState({
     name: '',
@@ -324,6 +335,8 @@ export default function App() {
     address: '',
   })
   const searchRef = useRef<HTMLInputElement>(null)
+  const categoriesRef = useRef<HTMLDivElement>(null)
+  const categoriesTriggerRef = useRef<HTMLButtonElement>(null)
 
   const modalOpen = searchOpen || !!activeArticle
   const topicOptions = contentCategories.length
@@ -370,6 +383,7 @@ export default function App() {
     }
     setRoutePath(internalPath)
     setMenuOpen(false)
+    setCategoriesOpen(false)
     setSearchOpen(false)
     setActiveArticle(null)
     window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -716,6 +730,29 @@ export default function App() {
     }
   }, [modalOpen, searchOpen])
 
+  useEffect(() => {
+    if (!categoriesOpen) return
+
+    const closeOnOutsideClick = (event: PointerEvent) => {
+      if (!categoriesRef.current?.contains(event.target as Node)) {
+        setCategoriesOpen(false)
+      }
+    }
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setCategoriesOpen(false)
+        categoriesTriggerRef.current?.focus()
+      }
+    }
+
+    document.addEventListener('pointerdown', closeOnOutsideClick)
+    document.addEventListener('keydown', closeOnEscape)
+    return () => {
+      document.removeEventListener('pointerdown', closeOnOutsideClick)
+      document.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [categoriesOpen])
+
   const filtered = useMemo(
     () =>
       articles.filter(
@@ -726,7 +763,7 @@ export default function App() {
 
   const adsEnabled = useMemo(() => adsPreviewEnabled(), [])
 
-  const selectTopic = (value: string) => {
+  const selectTopic = (value: string, fallbackSlug?: string) => {
     setTopic(value)
     const selectedCategory = contentCategories.find(
       (category) => textFromHtml(category.name) === value,
@@ -734,7 +771,13 @@ export default function App() {
     setActiveCategoryId(selectedCategory?.id ?? null)
     setCurrentPage(1)
     setPage('home')
-    navigateToPath(selectedCategory ? `/category/${selectedCategory.slug}/` : '/')
+    navigateToPath(
+      selectedCategory
+        ? `/category/${selectedCategory.slug}/`
+        : fallbackSlug
+          ? `/category/${fallbackSlug}/`
+          : '/',
+    )
     setTimeout(() => {
       document.getElementById('latest')?.scrollIntoView({
         behavior: 'smooth',
@@ -743,8 +786,14 @@ export default function App() {
     }, 30)
   }
 
+  const selectCategory = (label: string, slug: string) => {
+    setCategoriesOpen(false)
+    selectTopic(label, slug)
+  }
+
   const scrollNewsletter = () => {
     setMenuOpen(false)
+    setCategoriesOpen(false)
     if (page !== 'home' || routePath !== '/') openPage('home')
     setTimeout(() => {
       document.getElementById('newsletter')?.scrollIntoView({
@@ -1560,12 +1609,46 @@ export default function App() {
             Discover
             <span />
           </button>
-          <button onClick={() => selectTopic('Physical Science & Technology')}>
-            Physical Science
-          </button>
-          <button onClick={() => selectTopic('Biological Science & Technology')}>
-            Biological Sciences
-          </button>
+          <div
+            className={`nav-category${categoriesOpen ? ' is-open' : ''}`}
+            ref={categoriesRef}
+            onPointerEnter={(event) => {
+              if (event.pointerType === 'mouse') setCategoriesOpen(true)
+            }}
+            onPointerLeave={(event) => {
+              if (event.pointerType === 'mouse') setCategoriesOpen(false)
+            }}
+          >
+            <button
+              ref={categoriesTriggerRef}
+              type="button"
+              className="nav-category-trigger"
+              aria-haspopup="true"
+              aria-expanded={categoriesOpen}
+              aria-controls="categories-menu"
+              onClick={() => setCategoriesOpen((current) => !current)}
+            >
+              Categories
+              <Icon name="chevron" size={14} />
+            </button>
+            {categoriesOpen && (
+              <div className="categories-dropdown" id="categories-menu">
+                <div className="categories-panel">
+                  {categoryLinks.map((link) => (
+                    <button
+                      key={link.slug}
+                      type="button"
+                      className={topic === link.label ? 'selected' : ''}
+                      aria-current={topic === link.label ? 'page' : undefined}
+                      onClick={() => selectCategory(link.label, link.slug)}
+                    >
+                      {link.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
           <button onClick={() => scrollNewsletter()}>
             The Magazine <span className="new-tag">NEW</span>
           </button>
@@ -1596,7 +1679,10 @@ export default function App() {
             className="mobile-menu"
             aria-label="Toggle navigation"
             aria-expanded={menuOpen}
-            onClick={() => setMenuOpen(!menuOpen)}
+            onClick={() => {
+              setMenuOpen(!menuOpen)
+              setCategoriesOpen(false)
+            }}
           >
             <Icon name={menuOpen ? 'close' : 'menu'} />
           </button>
