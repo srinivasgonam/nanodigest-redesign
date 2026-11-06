@@ -1474,3 +1474,333 @@ main:focus {
 .ad-slot--live.ad-slot--sidebar ins.adsbygoogle {
   min-height: 600px;
 }
+
+/* ==================================================================
+ * Design polish (subtle). Brand colours, layout and images unchanged.
+ * Everything below is additive and can be removed as one block.
+ * ================================================================== */
+
+/* --- Typography & selection -------------------------------------- */
+html {
+  scroll-padding-top: 96px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: #f6c9c9;
+  color: #8d0f10;
+}
+
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+/* --- Readability: raise the smallest text sizes ------------------- */
+.eyebrow { font-size: 10px; }
+.category-label { font-size: 10px; }
+.article-meta { font-size: 11px; }
+.article-card p { font-size: 13px; line-height: 1.75; }
+.intro > p { font-size: 14px; }
+.topics-title span { font-size: 12px; }
+.topic-links button { font-size: 11px; }
+.filter-row > button { font-size: 11px; padding: 8px 13px; }
+.story-count { font-size: 11px; }
+.text-link { font-size: 11px; }
+.newsletter-copy > p { font-size: 13px; }
+.newsletter-label { font-size: 10px; }
+.manifesto > p { font-size: 14px; }
+.footer-top > span { font-size: 11px; }
+.footer-bottom { font-size: 11px; }
+
+.filter-row { flex-wrap: wrap; }
+.topic-links { flex-wrap: wrap; row-gap: 12px; }
+
+/* --- Sticky navigation ------------------------------------------- */
+/* overflow: clip keeps the horizontal clipping but, unlike hidden, lets sticky work. */
+.site-shell {
+  overflow: hidden;
+  overflow: clip;
+}
+
+.navigation {
+  position: sticky;
+  top: 12px;
+  z-index: 18;
+  transition: box-shadow .25s ease;
+}
+
+.latest-section {
+  scroll-margin-top: 0;
+}
+
+@keyframes nd-pop {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: none; }
+}
+
+.categories-panel,
+.mobile-dropdown {
+  animation: nd-pop .18s ease-out;
+}
+
+.mobile-dropdown {
+  max-height: calc(100dvh - 120px);
+  overflow-y: auto;
+}
+
+.mobile-dropdown button:hover {
+  background: #f5dede;
+  border-radius: 8px;
+}
+
+/* --- Cards & images ----------------------------------------------- */
+.article-image,
+.pick-image {
+  background-color: #f1e4e4;
+}
+
+.article-card h3,
+.article-card p {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+}
+
+.article-card h3,
+.pick-copy h2 {
+  transition: color .2s ease;
+}
+
+.article-card:hover h3,
+.pick-story:hover .pick-copy h2 {
+  color: var(--brand-dark);
+}
+
+.article-card:focus-visible,
+.pick-story:focus-visible,
+.hero-story:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 4px;
+}
+
+.shop-product-card {
+  transition: transform .25s ease, box-shadow .25s ease;
+}
+
+/* --- Buttons ------------------------------------------------------- */
+.primary-button {
+  box-shadow: 0 8px 20px rgba(201, 18, 18, .18);
+}
+
+.primary-button:hover {
+  box-shadow: 0 12px 26px rgba(201, 18, 18, .26);
+}
+
+.secondary-button:hover {
+  background: #faf1f1;
+  border-color: rgba(201, 18, 18, .35);
+}
+
+.primary-button:active,
+.secondary-button:active,
+.subscribe-button:active {
+  transform: translateY(0);
+}
+
+button:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+.primary-button:disabled:hover,
+.secondary-button:disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+/* --- Forms ---------------------------------------------------------- */
+.form-panel .field > span {
+  font-weight: 600;
+}
+
+.form-panel .field input::placeholder,
+.form-panel .field textarea::placeholder {
+  color: #b3a5a5;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.form-panel .field input:hover,
+.form-panel .field select:hover,
+.form-panel .field textarea:hover {
+  border-color: rgba(141, 15, 16, .28);
+}
+
+.alert {
+  border-left: 4px solid currentColor;
+}
+
+/* --- Article reading experience ----------------------------------- */
+.reading-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 19;
+  height: 3px;
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  background: linear-gradient(90deg, #c91212, #8d0f10);
+  pointer-events: none;
+}
+
+.cms-detail .cms-content {
+  max-width: 720px;
+  font-size: 17px;
+  line-height: 1.9;
+  color: #3f2c2d;
+}
+
+.cms-detail .cms-content > p:first-of-type {
+  font-size: 1.12em;
+  color: #2f2021;
+}
+
+.cms-detail-image {
+  box-shadow: 0 18px 40px rgba(70, 20, 20, .14);
+}
+
+.cms-meta {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 14px;
+  font-size: 12px;
+}
+
+.cms-meta span + span::before {
+  content: '•';
+  margin-right: 14px;
+  color: #c9a3a3;
+}
+
+.cms-content blockquote {
+  margin: 1.6em 0;
+  padding: .5em 0 .5em 1.2em;
+  border-left: 3px solid var(--brand);
+  color: #5a4646;
+  font-style: italic;
+}
+
+.cms-content ul,
+.cms-content ol {
+  margin: 0 0 1.2em;
+  padding-left: 1.4em;
+}
+
+.cms-content li {
+  margin: .4em 0;
+}
+
+.cms-content hr {
+  border: 0;
+  border-top: 1px solid #ecdede;
+  margin: 2em 0;
+}
+
+.cms-content table {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.cms-content th,
+.cms-content td {
+  padding: 8px 12px;
+  border: 1px solid #ecdede;
+  text-align: left;
+}
+
+.cms-content th {
+  background: #faf1f1;
+  color: var(--brand-dark);
+}
+
+.cms-content pre {
+  overflow-x: auto;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: #2b2223;
+  color: #f6e9e9;
+  font-size: 13px;
+}
+
+/* --- Footer ----------------------------------------------------------- */
+footer {
+  margin-top: 16px;
+  padding-bottom: 28px;
+}
+
+.footer-links button {
+  font-size: 12px;
+  transition: color .2s ease, transform .2s ease;
+}
+
+/* --- Hover lifts (only on devices that can hover) ----------------------- */
+@media (hover: hover) {
+  .shop-product-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 36px rgba(141, 15, 16, .12);
+  }
+
+  .footer-links button:hover {
+    transform: translateX(3px);
+  }
+}
+
+/* --- Gentle scroll-in motion (progressive: skipped where unsupported) ---- */
+@supports (animation-timeline: view()) {
+  @keyframes nd-rise {
+    from { opacity: 0; transform: translateY(28px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  .topics-strip,
+  .latest-section,
+  .nano-tv,
+  .newsletter,
+  .manifesto,
+  .page-panel {
+    animation: nd-rise linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 35%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .topics-strip,
+  .latest-section,
+  .nano-tv,
+  .newsletter,
+  .manifesto,
+  .page-panel,
+  .categories-panel,
+  .mobile-dropdown {
+    animation: none;
+  }
+}

@@ -394,6 +394,7 @@ export default function App() {
   const searchRef = useRef<HTMLInputElement>(null)
   const categoriesRef = useRef<HTMLDivElement>(null)
   const categoriesTriggerRef = useRef<HTMLButtonElement>(null)
+  const progressRef = useRef<HTMLDivElement>(null)
 
   const modalOpen = searchOpen || !!activeArticle
   const topicOptions = contentCategories.length
@@ -467,7 +468,16 @@ export default function App() {
   }, [])
 
   useEffect(() => {
-    const onScroll = () => setShowBackToTop(window.scrollY > 700)
+    const onScroll = () => {
+      setShowBackToTop(window.scrollY > 700)
+      // Reading progress is written straight to the element (no re-render per scroll frame).
+      const bar = progressRef.current
+      if (bar) {
+        const scrollable = document.documentElement.scrollHeight - window.innerHeight
+        const ratio = scrollable > 0 ? Math.min(1, Math.max(0, window.scrollY / scrollable)) : 0
+        bar.style.transform = `scaleX(${ratio})`
+      }
+    }
     onScroll()
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
@@ -1397,6 +1407,12 @@ export default function App() {
       : [sanitizedMarkup, '']
     const showInContentAd = showArticleAds && contentSecond.length > 0
     const showSidebarAd = showArticleAds && sanitizedMarkup.length > 1500
+    const readingMinutes = isArticleDetail
+      ? Math.max(
+          1,
+          Math.round(sanitizedMarkup.replace(/<[^>]*>/g, ' ').split(/\s+/).filter(Boolean).length / 220),
+        )
+      : 0
 
     if (!title) {
       return (
@@ -1417,6 +1433,7 @@ export default function App() {
               {cmsPost && (
                 <div className="article-meta cms-meta">
                   <span>{new Intl.DateTimeFormat('en', { dateStyle: 'long' }).format(new Date(cmsPost.date))}</span>
+                  <span>{readingMinutes} min read</span>
                 </div>
               )}
             </div>
@@ -1680,6 +1697,9 @@ export default function App() {
   return (
     <div className="site-shell">
       <a className="skip-link" href="#main-content">Skip to main content</a>
+      {cmsPost && !contentLoading && (
+        <div className="reading-progress" ref={progressRef} aria-hidden="true" />
+      )}
       <div className="ambient ambient-one" />
       <div className="ambient ambient-two" />
 
