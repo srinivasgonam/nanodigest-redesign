@@ -38,6 +38,15 @@ jobs:
       - name: Build website
         run: npm run build
         working-directory: nanodigest-redesign-clean
+        env:
+          # Optional: set a repository variable named VITE_FORMS_API_URL to enable form submissions.
+          VITE_FORMS_API_URL: ${{ vars.VITE_FORMS_API_URL }}
+          # Optional Google AdSense settings (repository variables); leave unset for no ads.
+          VITE_ADSENSE_CLIENT: ${{ vars.VITE_ADSENSE_CLIENT }}
+          VITE_ADSENSE_SLOT_LEADERBOARD: ${{ vars.VITE_ADSENSE_SLOT_LEADERBOARD }}
+          VITE_ADSENSE_SLOT_IN_ARTICLE: ${{ vars.VITE_ADSENSE_SLOT_IN_ARTICLE }}
+          VITE_ADSENSE_SLOT_SIDEBAR: ${{ vars.VITE_ADSENSE_SLOT_SIDEBAR }}
+          VITE_SHOW_AD_PLACEHOLDERS: ${{ vars.VITE_SHOW_AD_PLACEHOLDERS }}
 
       - name: Upload website files
         uses: actions/upload-pages-artifact@v4

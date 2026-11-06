@@ -1,12 +1,19 @@
 const trimSlash = (url: string) => url.replace(/\/+$/, '')
 
 /**
- * Form submissions backend (LocalWP WordPress + nanodigest-backend plugin).
- * Set VITE_WORDPRESS_URL in .env to override.
+ * Form submissions backend. Resolution order (see formUrl below):
+ *  1. VITE_FORMS_API_URL  – any backend exposing POST {base}/newsletter, /contact,
+ *     /advertise and /orders (the bundled Express API at ".../api", or a hosted one).
+ *  2. VITE_WORDPRESS_URL  – WordPress + nanodigest-backend plugin. Local-only
+ *     hosts (localhost, *.local) are ignored in production builds because a
+ *     visitor's browser can never reach them.
+ *  3. In development with nothing set, the bundled Express API through the Vite proxy.
  */
-export const WORDPRESS_URL = trimSlash(
-  import.meta.env.VITE_WORDPRESS_URL || 'http://nano-digest.local',
-)
+const formsApiUrl = trimSlash(import.meta.env.VITE_FORMS_API_URL || '')
+export const WORDPRESS_URL = trimSlash(import.meta.env.VITE_WORDPRESS_URL || '')
+
+const isLocalOnlyHost = (url: string) =>
+  /^(https?:\/\/)?(localhost|127\.0\.0\.1|\[::1\]|[^/:]+\.(local|localhost|test))(:\d+)?(\/|$)/i.test(url)
 
 /**
  * Content API for the browser. By default we route through the local Express
@@ -52,9 +59,20 @@ export function contentUrl(path: string, params?: Record<string, QueryValue>): s
 }
 
 /**
- * Public form endpoint on the LocalWP WordPress install,
- * e.g. formUrl('newsletter') -> http://nano-digest.local/wp-json/nanodigest/v1/newsletter
+ * Endpoint for a form submission ('newsletter' | 'contact' | 'advertise' | 'orders'),
+ * or null when no reachable backend is configured (e.g. the static GitHub Pages
+ * preview). Callers must show a friendly message instead of firing a request
+ * that is certain to fail.
  */
-export function formUrl(route: string): string {
-  return `${WORDPRESS_URL}/wp-json/nanodigest/v1/${route}`
+export function formUrl(route: string): string | null {
+  if (formsApiUrl) return `${formsApiUrl}/${route}`
+
+  if (WORDPRESS_URL && (import.meta.env.DEV || !isLocalOnlyHost(WORDPRESS_URL))) {
+    return `${WORDPRESS_URL}/wp-json/nanodigest/v1/${route}`
+  }
+
+  return import.meta.env.DEV ? `/api/${route}` : null
 }
+
+export const FORMS_UNAVAILABLE_MESSAGE =
+  'Online submissions are not connected on this preview yet. Please reach the Nano Digest team through nanodigest.in/contact.'

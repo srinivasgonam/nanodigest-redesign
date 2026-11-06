@@ -53,4 +53,20 @@ For the GitHub Pages project site, production assets use the `/nanodigest-redesi
 
 The Express API reads published articles, categories, pages, and shop products from Nano Digest's public WordPress/WooCommerce APIs. Article and category lists are paginated; article, category, CMS page, product, cart, checkout, and account URLs resolve locally. Content updates require network access to `nanodigest.in`.
 
+## Forms on the deployed site
+
+Newsletter, contact, advertise and order-request forms need a backend. Set `VITE_FORMS_API_URL` at build time (for GitHub Pages, add it as a repository variable and pass it to the build step) to the base URL of a backend that exposes `POST /newsletter`, `/contact`, `/advertise` and `/orders` — the bundled Express API works if deployed to a Node host. When it is not set, the static site shows a clear "not connected" message rather than failing silently. Local hosts such as `http://nano-digest.local` are ignored in production builds.
+
+## Cookie notice and ads
+
+A cookie notice stores the visitor's choice (`nano-digest-cookie-choice`) in their browser. Google AdSense is loaded only when the visitor chooses "Accept all".
+
+### Google AdSense ad spaces
+
+Ad spaces appear on the homepage (top banner and a mid-page banner), category pages (banner) and articles (inside the text, plus a sidebar on wide screens).
+
+- **Preview the spaces:** add `?ads=preview` to any page URL (use `?ads=off` to hide them). Or set `VITE_SHOW_AD_PLACEHOLDERS=true` at build time. Without either, the public site shows no empty boxes.
+- **Show real ads:** set `VITE_ADSENSE_CLIENT` (your `ca-pub-…` publisher id) and the ad-unit ids `VITE_ADSENSE_SLOT_LEADERBOARD`, `VITE_ADSENSE_SLOT_IN_ARTICLE` and `VITE_ADSENSE_SLOT_SIDEBAR`. In GitHub, add them as repository variables (Settings → Secrets and variables → Actions → Variables); the deploy workflow passes them to the build.
+- **AdSense requires your own domain.** Google approves a site by its domain, so real ads will only serve once this site runs on a domain you have added to AdSense (for example nanodigest.in), not on a github.io address. That domain also needs an `ads.txt` file at its root; AdSense shows you the exact line to use.
+
 Order checkout currently records an order request in `server/data/submissions.json`; it does not collect payment or create an order in WooCommerce. Connect a payment provider and the WooCommerce order API before accepting real purchases.

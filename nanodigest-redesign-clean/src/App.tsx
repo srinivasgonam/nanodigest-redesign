@@ -1,13 +1,18 @@
 import { type ReactElement, useEffect, useMemo, useRef, useState } from 'react'
 import DOMPurify from 'dompurify'
 import nanoDigestLogo from '../assets/images/nanodigest-logo.png'
-import { contentUrl, formUrl } from './lib/api'
+import { FORMS_UNAVAILABLE_MESSAGE, contentUrl, formUrl } from './lib/api'
 import {
   curatedHomepageStories,
   resolveArticleImage,
   sampleArticles,
 } from './lib/homepageContent.js'
-import { AdSlot, adsPreviewEnabled } from './components/AdSlot'
+import {
+  AdSlot,
+  COOKIE_CHOICE_EVENT,
+  COOKIE_CHOICE_KEY,
+  useAdsEnabled,
+} from './components/AdSlot'
 import { Typewriter } from './components/Typewriter'
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, '')
@@ -126,7 +131,34 @@ const categoryLinks = [
   { label: 'Material Science & Technology', slug: 'material-science-technology' },
   { label: 'Physical Science & Technology', slug: 'physical-science-technology' },
   { label: 'Innovations & Education', slug: 'innovations-education' },
+  { label: 'NanoDigest Exclusive', slug: 'web-exclusive' },
+  { label: 'Nano TV', slug: 'nano-tv' },
 ]
+
+const NANO_TV_URL = 'https://youtube.com/@nanotv-thesciencechannel?si=Zs7zXoyx-1tl05OL'
+
+const socialLinks = [
+  { name: 'facebook', label: 'Facebook', href: 'https://www.facebook.com/nanodigest.in' },
+  { name: 'x', label: 'X (Twitter)', href: 'https://twitter.com/nanodigest' },
+  { name: 'linkedin', label: 'LinkedIn', href: 'https://www.linkedin.com/company/nanodigestin/' },
+  { name: 'youtube', label: 'YouTube', href: NANO_TV_URL },
+]
+
+function readStoredValue(key: string) {
+  try {
+    return window.localStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+function storeValue(key: string, value: string) {
+  try {
+    window.localStorage.setItem(key, value)
+  } catch {
+    /* storage unavailable (private mode) – the choice simply isn't remembered */
+  }
+}
 
 function textFromHtml(markup: string) {
   const element = document.createElement('div')
@@ -249,6 +281,26 @@ function Icon({ name, size = 20 }: { name: string; size?: number }) {
           stroke="none"
           d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31.3 31.3 0 0 0 0 12a31.3 31.3 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31.3 31.3 0 0 0 24 12a31.3 31.3 0 0 0-.5-5.8ZM9.6 15.6V8.4l6.2 3.6-6.2 3.6Z"
         />
+      ) : name === 'facebook' ? (
+        <path
+          fill="currentColor"
+          stroke="none"
+          d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07c0 6.02 4.39 11.02 10.13 11.93v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.69.24 2.69.24v2.97h-1.51c-1.49 0-1.96.93-1.96 1.88v2.26h3.33l-.53 3.49h-2.8V24C19.61 23.09 24 18.09 24 12.07Z"
+        />
+      ) : name === 'x' ? (
+        <path
+          fill="currentColor"
+          stroke="none"
+          d="M18.24 2.25h3.31l-7.23 8.26 8.5 11.24h-6.66l-5.21-6.82-5.97 6.82H1.67l7.73-8.84L1.25 2.25h6.83l4.71 6.23 5.45-6.23Zm-1.16 17.52h1.83L7.08 4.13H5.12l11.96 15.64Z"
+        />
+      ) : name === 'linkedin' ? (
+        <path
+          fill="currentColor"
+          stroke="none"
+          d="M20.45 20.45h-3.56v-5.57c0-1.33-.03-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28ZM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12ZM7.12 20.45H3.56V9h3.56v11.45ZM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0Z"
+        />
+      ) : name === 'arrow-up' ? (
+        <path d="M12 19V5M6 11l6-6 6 6" />
       ) : name === 'whatsapp' ? (
         <path
           fill="currentColor"
@@ -288,6 +340,11 @@ export default function App() {
   const [cmsProduct, setCmsProduct] = useState<WordPressProduct | null>(null)
   const [contentLoading, setContentLoading] = useState(false)
   const [contentError, setContentError] = useState('')
+  const [shopError, setShopError] = useState('')
+  const [cookieChoice, setCookieChoice] = useState<string | null>(() =>
+    readStoredValue(COOKIE_CHOICE_KEY),
+  )
+  const [showBackToTop, setShowBackToTop] = useState(false)
   const [activeCategoryId, setActiveCategoryId] = useState<number | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(0)
@@ -367,7 +424,7 @@ export default function App() {
       .then((payload: StoreProduct[]) => setStoreProducts(payload))
       .catch((error: unknown) => {
         if (error instanceof Error && error.name !== 'AbortError') {
-          setContentError(error.message)
+          setShopError(error.message)
         }
       })
       .finally(() => setStoreProductsLoaded(true))
@@ -386,6 +443,7 @@ export default function App() {
     setCategoriesOpen(false)
     setSearchOpen(false)
     setActiveArticle(null)
+    setStatus(null)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -407,6 +465,45 @@ export default function App() {
     window.addEventListener('popstate', onPopState)
     return () => window.removeEventListener('popstate', onPopState)
   }, [])
+
+  useEffect(() => {
+    const onScroll = () => setShowBackToTop(window.scrollY > 700)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  useEffect(() => {
+    const siteName = 'Nano Digest'
+    const normalized = routePath.replace(/^\/+|\/+$/g, '')
+    const detailTitle =
+      cmsPost?.title.rendered || cmsPage?.title.rendered || cmsProduct?.title.rendered
+    const storeTitles: Record<string, string> = {
+      shop: 'Shop',
+      cart: 'Your cart',
+      checkout: 'Checkout',
+      'my-account': 'My account',
+      pages: 'All pages',
+    }
+
+    let title = `${siteName} — Small Science. Limitless Impact.`
+    if (detailTitle) {
+      title = `${textFromHtml(detailTitle)} — ${siteName}`
+    } else if (storeTitles[normalized]) {
+      title = `${storeTitles[normalized]} — ${siteName}`
+    } else if (normalized.startsWith('category/')) {
+      title = `${topic === 'All stories' ? 'Stories' : topic} — ${siteName}`
+    } else if (page !== 'home') {
+      title = `${pageLabels[page]} — ${siteName}`
+    }
+    document.title = title
+  }, [cmsPage, cmsPost, cmsProduct, page, routePath, topic])
+
+  const chooseCookies = (choice: 'accepted' | 'essential') => {
+    storeValue(COOKIE_CHOICE_KEY, choice)
+    setCookieChoice(choice)
+    window.dispatchEvent(new Event(COOKIE_CHOICE_EVENT))
+  }
 
   useEffect(() => {
     const controller = new AbortController()
@@ -449,7 +546,7 @@ export default function App() {
       .then((payload: WordPressProduct[]) => setCmsProducts(payload))
       .catch((error: unknown) => {
         if (error instanceof Error && error.name !== 'AbortError') {
-          setContentError(error.message)
+          setShopError(error.message)
         }
       })
 
@@ -761,7 +858,7 @@ export default function App() {
     [articles, topic],
   )
 
-  const adsEnabled = useMemo(() => adsPreviewEnabled(), [])
+  const adsEnabled = useAdsEnabled()
 
   const selectTopic = (value: string, fallbackSlug?: string) => {
     setTopic(value)
@@ -805,8 +902,14 @@ export default function App() {
   const handleNewsletterSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
+    const endpoint = formUrl('newsletter')
+    if (!endpoint) {
+      setStatus({ type: 'error', message: FORMS_UNAVAILABLE_MESSAGE })
+      return
+    }
+
     try {
-      const response = await fetch(formUrl('newsletter'), {
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newsletterForm),
@@ -833,8 +936,14 @@ export default function App() {
   const handleContactSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
+    const endpoint = formUrl('contact')
+    if (!endpoint) {
+      setStatus({ type: 'error', message: FORMS_UNAVAILABLE_MESSAGE })
+      return
+    }
+
     try {
-      const response = await fetch(formUrl('contact'), {
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(contactForm),
@@ -861,8 +970,14 @@ export default function App() {
   const handleAdvertiseSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
+    const endpoint = formUrl('advertise')
+    if (!endpoint) {
+      setStatus({ type: 'error', message: FORMS_UNAVAILABLE_MESSAGE })
+      return
+    }
+
     try {
-      const response = await fetch(formUrl('advertise'), {
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(advertiseForm),
@@ -907,8 +1022,14 @@ export default function App() {
       return
     }
 
+    const endpoint = formUrl('orders')
+    if (!endpoint) {
+      setOrderStatus({ type: 'error', message: FORMS_UNAVAILABLE_MESSAGE })
+      return
+    }
+
     try {
-      const response = await fetch(formUrl('orders'), {
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1178,10 +1299,13 @@ export default function App() {
             Nano Digest respects the privacy of its readers, partners, and contributors. We collect only the data necessary to provide services such as newsletter subscriptions, research inquiries, and advertising discussions.
           </p>
           <p>
-            We use your contact details only to deliver the communication you request and to improve the relevance of our content. We do not sell personal information to third parties, and we store submissions securely in our project backend.
+            We use your contact details only to deliver the communication you request and to improve the relevance of our content. We do not sell personal information to third parties, and we store submissions securely.
           </p>
           <p>
-            If you wish to update or remove your information, contact the editorial team directly via the contact page or support channel.
+            If you wish to update or remove your information, contact the editorial team directly via the contact page.
+          </p>
+          <p>
+            Cookies: this site remembers your cookie choice and the contents of your cart in your own browser. Optional advertising or analytics cookies are used only if you accept them in the cookie notice.
           </p>
         </section>
       ),
@@ -1197,10 +1321,10 @@ export default function App() {
             By using the Nano Digest website, you agree to use this content responsibly and for lawful purposes. Articles, summaries, and related materials are provided for informational and educational use.
           </p>
           <p>
-            All content should be considered original editorial material for the site’s demonstration and communications workflow. Reproduction for publication or redistribution requires written permission from the publisher.
+            Stories link to their original reporting and sources where applicable. Reproduction for publication or redistribution requires written permission from the publisher.
           </p>
           <p>
-            The website may be updated periodically, and features such as subscriptions, forms, and partner outreach are intended to provide a complete client presentation experience during development.
+            The website may be updated periodically, and features such as subscriptions, contact forms, the shop, and partner enquiries may change or be withdrawn without notice.
           </p>
         </section>
       ),
@@ -1333,7 +1457,13 @@ export default function App() {
         <h1>Shop</h1>
         <p>Books and resources from Nano Digest.</p>
       </div>
+      {shopError && !storeProduct && (
+        <div className="alert error" role="status">
+          The live store is temporarily unavailable. You can still view and buy the book on the original Nano Digest shop.
+        </div>
+      )}
       <div className="shop-grid">
+        {!storeProduct && (
         <article className="shop-product-card">
           <div className="shop-product-card-media">
             <img
@@ -1362,12 +1492,13 @@ export default function App() {
               >
                 View Details / Buy Now <Icon name="diagonal" size={16} />
               </a>
-              <button className="secondary-button" onClick={() => navigateToPath('/home')}>
+              <button className="secondary-button" onClick={() => navigateToPath('/')}>
                 Back to home
               </button>
             </div>
           </div>
         </article>
+        )}
         {!storeProductsLoaded ? null : storeProduct ? (
           <article className="shop-product-card">
             <div className="shop-product-card-media">
@@ -1458,7 +1589,7 @@ export default function App() {
               <label className="field"><span>Phone</span><input type="tel" autoComplete="tel" value={checkoutForm.phone} onChange={(event) => setCheckoutForm({ ...checkoutForm, phone: event.target.value })} /></label>
               <label className="field full-width"><span>Delivery address</span><textarea autoComplete="street-address" rows={4} value={checkoutForm.address} onChange={(event) => setCheckoutForm({ ...checkoutForm, address: event.target.value })} required /></label>
             </div>
-            <p className="payment-note">This demo records an order request only. No payment is collected online.</p>
+            <p className="payment-note">This records an order request only. No payment is collected online; the Nano Digest team will contact you to complete the order.</p>
             {orderStatus && <div className={`alert ${orderStatus.type}`} role="status">{orderStatus.message}</div>}
             <button className="primary-button" type="submit" disabled={!storeProduct}>Submit order request <Icon name="arrow" size={16} /></button>
           </form>
@@ -1548,6 +1679,7 @@ export default function App() {
 
   return (
     <div className="site-shell">
+      <a className="skip-link" href="#main-content">Skip to main content</a>
       <div className="ambient ambient-one" />
       <div className="ambient ambient-two" />
 
@@ -1653,6 +1785,7 @@ export default function App() {
             The Magazine <span className="new-tag">NEW</span>
           </button>
           <button onClick={() => openPage('about')}>About us</button>
+          <button onClick={() => navigateToPath('/shop/')}>Shop</button>
           <button onClick={() => openPage('advertise')}>Advertise</button>
         </div>
 
@@ -1695,6 +1828,8 @@ export default function App() {
                 {topicName}
               </button>
             ))}
+            <button onClick={() => navigateToPath('/category/nano-tv/')}>Nano TV</button>
+            <button onClick={() => navigateToPath('/shop/')}>Shop</button>
             <button onClick={() => openPage('about')}>About us</button>
             <button onClick={() => openPage('contact')}>Contact</button>
             <button onClick={() => openPage('advertise')}>Advertise</button>
@@ -1702,7 +1837,7 @@ export default function App() {
         )}
       </nav>
 
-      <main>
+      <main id="main-content" tabIndex={-1}>
         {isShopRoute ? renderShopRoute() : isCartRoute ? renderCartRoute() : isCheckoutRoute ? renderCheckoutRoute() : isAccountRoute ? renderAccountRoute() : isCmsDetailRoute ? renderCmsDetail() : isCategoryRoute ? renderCategoryArchive() : isDirectoryRoute ? renderPageDirectory() : page === 'home' ? (
           <>
 
@@ -1890,6 +2025,28 @@ export default function App() {
               )}
             </section>
 
+            <AdSlot placement="home-mid-banner" />
+
+            <section className="nano-tv" id="nano-tv" aria-labelledby="nano-tv-heading">
+              <div className="nano-tv-copy">
+                <span className="eyebrow">
+                  <Icon name="youtube" size={16} /> NANO TV
+                </span>
+                <h2 id="nano-tv-heading">Nanotechnology, on screen.</h2>
+                <p>
+                  Short, clear explainers on nanoelectronics, nanomedicine, graphene, nanoparticles and more — from the Nano Digest science channel.
+                </p>
+              </div>
+              <div className="nano-tv-actions">
+                <a className="primary-button" href={NANO_TV_URL} target="_blank" rel="noopener noreferrer">
+                  Watch on YouTube <Icon name="diagonal" size={16} />
+                </a>
+                <button className="secondary-button" onClick={() => navigateToPath('/category/nano-tv/')}>
+                  Browse Nano TV episodes <Icon name="arrow" size={16} />
+                </button>
+              </div>
+            </section>
+
             <section className="newsletter" id="newsletter">
               <div className="newsletter-orbit orbit-one" />
               <div className="newsletter-orbit orbit-two" />
@@ -1990,25 +2147,91 @@ export default function App() {
 
       <footer>
         <div className="footer-top">
-          <button className="footer-logo" onClick={() => openPage('home')}>
+          <button className="footer-logo" onClick={() => openPage('home')} aria-label="Nano Digest home">
             <img src={nanoDigestLogo} alt="Nano Digest" />
           </button>
           <span>Science. Perspective. Possibility.</span>
-          <div>
-            <button onClick={() => openPage('contact')}>
-              Get in touch <Icon name="diagonal" size={15} />
-            </button>
-            <button onClick={() => openPage('terms')}>Editorial policy</button>
-            <button onClick={() => navigateToPath('/pages/')}>All pages</button>
-            <button onClick={() => navigateToPath('/shop/')}>Shop</button>
+          <div className="footer-social" aria-label="Follow Nano Digest">
+            {socialLinks.map((link) => (
+              <a
+                key={link.name}
+                href={link.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={link.label}
+                title={link.label}
+              >
+                <Icon name={link.name} size={18} />
+              </a>
+            ))}
           </div>
         </div>
+
+        <nav className="footer-links" aria-label="Footer navigation">
+          <div>
+            <h3>Explore</h3>
+            <button onClick={() => openPage('home')}>Home</button>
+            <button onClick={() => navigateToPath('/category/nano-tv/')}>Nano TV</button>
+            <button onClick={() => navigateToPath('/shop/')}>Shop</button>
+            <button onClick={() => navigateToPath('/pages/')}>All pages</button>
+          </div>
+          <div>
+            <h3>Categories</h3>
+            {categoryLinks.slice(0, 5).map((link) => (
+              <button key={link.slug} onClick={() => selectCategory(link.label, link.slug)}>
+                {link.label}
+              </button>
+            ))}
+          </div>
+          <div>
+            <h3>Company</h3>
+            <button onClick={() => openPage('about')}>About</button>
+            <button onClick={() => openPage('advertise')}>Advertise</button>
+            <button onClick={() => openPage('contact')}>Contact</button>
+            <button onClick={scrollNewsletter}>Newsletter</button>
+          </div>
+          <div>
+            <h3>Legal</h3>
+            <button onClick={() => openPage('privacy')}>Privacy Policy</button>
+            <button onClick={() => openPage('terms')}>Terms & Conditions</button>
+          </div>
+        </nav>
+
         <div className="footer-bottom">
           <span>© {new Date().getFullYear()} Nano Digest. A world of possibilities.</span>
           <span>Made for curious minds.</span>
-          <button onClick={() => openPage('privacy')}>Privacy & terms</button>
+          <button onClick={() => openPage('terms')}>Editorial policy</button>
         </div>
       </footer>
+
+      {showBackToTop && (
+        <button
+          className="back-to-top"
+          aria-label="Back to top"
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        >
+          <Icon name="arrow-up" size={18} />
+        </button>
+      )}
+
+      {!cookieChoice && (
+        <div className="cookie-notice" role="region" aria-label="Cookie notice">
+          <p>
+            We use essential cookies to make this site work and, only with your consent, optional cookies for analytics and advertising.{' '}
+            <button className="text-link cookie-link" onClick={() => openPage('privacy')}>
+              Privacy Policy
+            </button>
+          </p>
+          <div className="cookie-actions">
+            <button className="secondary-button" onClick={() => chooseCookies('essential')}>
+              Essential only
+            </button>
+            <button className="primary-button" onClick={() => chooseCookies('accepted')}>
+              Accept all
+            </button>
+          </div>
+        </div>
+      )}
 
       {modalOpen && (
         <div
