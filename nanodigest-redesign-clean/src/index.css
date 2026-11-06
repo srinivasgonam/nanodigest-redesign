@@ -1804,3 +1804,233 @@ footer {
     animation: none;
   }
 }
+
+/* ==================================================================
+ * Moderate enhancements: hero actions, stats strip, subject cards.
+ * No images are used; icons are inline SVG in the brand colours.
+ * ================================================================== */
+
+/* --- Hero actions ------------------------------------------------- */
+.intro-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 14px;
+  margin-top: 22px;
+}
+
+.intro-actions .primary-button,
+.intro-actions .secondary-button {
+  padding: 11px 18px;
+  font-size: 13px;
+}
+
+.intro-subscribe {
+  gap: 8px;
+  font-size: 12px;
+  color: var(--brand-dark);
+}
+
+/* --- Stats strip -------------------------------------------------- */
+.stats-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  margin: 36px 0 8px;
+  border: 1px solid #ecdede;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, .72), rgba(246, 201, 201, .22));
+  overflow: hidden;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 22px 24px;
+  border-left: 1px solid #ecdede;
+}
+
+.stat:first-child {
+  border-left: 0;
+}
+
+.stat strong {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Manrope', sans-serif;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: -.8px;
+  color: var(--brand-dark);
+}
+
+.stat span {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.stat-link {
+  transition: background .2s ease;
+}
+
+.stat-link:hover {
+  background: rgba(246, 201, 201, .35);
+}
+
+/* --- Subject cards -------------------------------------------------- */
+.subject-section {
+  margin: 48px 0 8px;
+}
+
+.subject-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.subject-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 22px 20px;
+  border-radius: 16px;
+  border: 1px solid #ecdede;
+  background: linear-gradient(140deg, rgba(255, 255, 255, .8), rgba(255, 255, 255, .38));
+  text-align: left;
+  transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+}
+
+.subject-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #f6dcdc;
+  color: #c91212;
+}
+
+.subject-card h3 {
+  margin: 6px 0 0;
+  font-family: 'Manrope', sans-serif;
+  font-size: 16px;
+  font-weight: 650;
+  letter-spacing: -.3px;
+  line-height: 1.3;
+  color: var(--brand-dark);
+}
+
+.subject-card p {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: #6f6667;
+}
+
+.subject-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--brand);
+}
+
+.subject-more svg {
+  transition: transform .2s ease;
+}
+
+.subject-card:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 4px;
+}
+
+@media (hover: hover) {
+  .subject-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(201, 18, 18, .3);
+    box-shadow: 0 16px 34px rgba(141, 15, 16, .1);
+  }
+
+  .subject-card:hover .subject-more svg {
+    transform: translateX(3px);
+  }
+}
+
+@media (max-width: 1100px) {
+  .subject-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .stats-strip {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .stat {
+    padding: 18px;
+    border-left: 0;
+    border-top: 1px solid #ecdede;
+  }
+
+  .stat:nth-child(-n + 2) {
+    border-top: 0;
+  }
+
+  .stat:nth-child(even) {
+    border-left: 1px solid #ecdede;
+  }
+
+  .stat:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+
+  .stat strong {
+    font-size: 21px;
+  }
+
+  .subject-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .subject-card {
+    padding: 18px 16px;
+  }
+
+  .intro-actions {
+    margin-top: 18px;
+  }
+}
+
+@media (max-width: 440px) {
+  .subject-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@supports (animation-timeline: view()) {
+  .stats-strip,
+  .subject-section {
+    animation: nd-rise linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 35%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stats-strip,
+  .subject-section {
+    animation: none;
+  }
+
+  .subject-card,
+  .subject-more svg {
+    transition: none;
+  }
+}

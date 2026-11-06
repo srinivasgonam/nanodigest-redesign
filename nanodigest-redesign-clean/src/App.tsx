@@ -137,6 +137,39 @@ const categoryLinks = [
 
 const NANO_TV_URL = 'https://youtube.com/@nanotv-thesciencechannel?si=Zs7zXoyx-1tl05OL'
 
+const subjectCards = [
+  {
+    label: 'Biological Science & Technology',
+    slug: 'biological-science-technology',
+    icon: 'dna',
+    description: 'Nanomedicine, diagnostics, drug delivery and the life sciences.',
+  },
+  {
+    label: 'Chemical Science & Technology',
+    slug: 'chemical-science-technology',
+    icon: 'flask',
+    description: 'Nanoscale chemistry: sensors, purification, polymers and catalysts.',
+  },
+  {
+    label: 'Material Science & Technology',
+    slug: 'material-science-technology',
+    icon: 'cube',
+    description: 'Nanotubes, 2D materials, semiconductors and advanced materials.',
+  },
+  {
+    label: 'Physical Science & Technology',
+    slug: 'physical-science-technology',
+    icon: 'bolt',
+    description: 'Quantum effects, microscopy, photonics and nanoscale physics.',
+  },
+  {
+    label: 'Innovations & Education',
+    slug: 'innovations-education',
+    icon: 'bulb',
+    description: 'New tools, techniques and learning resources in nanotechnology.',
+  },
+]
+
 const socialLinks = [
   { name: 'facebook', label: 'Facebook', href: 'https://www.facebook.com/nanodigest.in' },
   { name: 'x', label: 'X (Twitter)', href: 'https://twitter.com/nanodigest' },
@@ -299,6 +332,28 @@ function Icon({ name, size = 20 }: { name: string; size?: number }) {
           stroke="none"
           d="M20.45 20.45h-3.56v-5.57c0-1.33-.03-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28ZM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12ZM7.12 20.45H3.56V9h3.56v11.45ZM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0Z"
         />
+      ) : name === 'dna' ? (
+        <>
+          <path d="M7 3c0 6 10 6 10 12v6M17 3c0 6-10 6-10 12v6" />
+          <path d="M8.6 7h6.8M8.6 17h6.8" />
+        </>
+      ) : name === 'flask' ? (
+        <>
+          <path d="M9 3h6M10 3v6l-5 10a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-10V3" />
+          <path d="M7.5 15h9" />
+        </>
+      ) : name === 'cube' ? (
+        <>
+          <path d="M12 3 4 7.5v9L12 21l8-4.5v-9L12 3Z" />
+          <path d="m4 7.5 8 4.5 8-4.5M12 12v9" />
+        </>
+      ) : name === 'bolt' ? (
+        <path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z" />
+      ) : name === 'bulb' ? (
+        <>
+          <path d="M9 18h6M10 21h4" />
+          <path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2v.1h5v-.1c0-.8.4-1.5 1-2A6 6 0 0 0 12 3Z" />
+        </>
       ) : name === 'arrow-up' ? (
         <path d="M12 19V5M6 11l6-6 6 6" />
       ) : name === 'whatsapp' ? (
@@ -1872,11 +1927,30 @@ export default function App() {
                     <Typewriter text="Small science. Limitless impact." accent="Limitless impact." />
                   </span>
                 </h1>
+                <div className="intro-actions">
+                  <button
+                    className="primary-button"
+                    onClick={() =>
+                      document.getElementById('latest')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                    }
+                  >
+                    Read the latest stories <Icon name="arrow" size={16} />
+                  </button>
+                  <button
+                    className="secondary-button"
+                    onClick={() => navigateToPath('/category/nano-tv/')}
+                  >
+                    Watch Nano TV
+                  </button>
+                  <button className="text-link intro-subscribe" onClick={scrollNewsletter}>
+                    Get the newsletter <Icon name="arrow" size={16} />
+                  </button>
+                </div>
               </div>
               <p>
-                Discover the ideas, breakthroughs, and people
-                <br className="desktop-break" /> shaping our world—one nanometer at
-                a time.
+                Clear reporting on the discoveries shaping our world,
+                <br className="desktop-break" /> from nanomedicine and clean energy
+                to advanced materials.
               </p>
             </section>
 
@@ -1947,6 +2021,56 @@ export default function App() {
             </section>
 
             <AdSlot placement="home-leaderboard" />
+
+            <section className="stats-strip" aria-label="Nano Digest at a glance">
+              {totalPages > 0 && (
+                <div className="stat">
+                  <strong>{totalStories.toLocaleString('en-IN')}</strong>
+                  <span>stories published</span>
+                </div>
+              )}
+              <div className="stat">
+                <strong>{subjectCards.length}</strong>
+                <span>science subject areas</span>
+              </div>
+              <div className="stat">
+                <strong>Since 2009</strong>
+                <span>covering nanotechnology</span>
+              </div>
+              <a className="stat stat-link" href={NANO_TV_URL} target="_blank" rel="noopener noreferrer">
+                <strong>
+                  Nano TV <Icon name="diagonal" size={16} />
+                </strong>
+                <span>video explainers on YouTube</span>
+              </a>
+            </section>
+
+            <section className="subject-section" aria-labelledby="subjects-heading">
+              <div className="section-heading">
+                <div>
+                  <span className="eyebrow">EXPLORE BY SUBJECT</span>
+                  <h2 id="subjects-heading">Pick a corner of the nano world.</h2>
+                </div>
+              </div>
+              <div className="subject-grid">
+                {subjectCards.map((card) => (
+                  <button
+                    key={card.slug}
+                    className="subject-card"
+                    onClick={() => selectCategory(card.label, card.slug)}
+                  >
+                    <span className="subject-icon">
+                      <Icon name={card.icon} size={22} />
+                    </span>
+                    <h3>{card.label}</h3>
+                    <p>{card.description}</p>
+                    <span className="subject-more">
+                      Browse stories <Icon name="arrow" size={15} />
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </section>
 
             <section className="topics-strip" aria-label="Explore topics">
               <div className="topics-title">
