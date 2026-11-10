@@ -14,6 +14,7 @@ import {
   useAdsEnabled,
 } from './components/AdSlot'
 import { Typewriter } from './components/Typewriter'
+import { CountUp, PageProgress, TopicTicker, useSiteEffects } from './components/Effects'
 
 const basePath = import.meta.env.BASE_URL.replace(/\/$/, '')
 
@@ -375,6 +376,7 @@ function Icon({ name, size = 20 }: { name: string; size?: number }) {
 }
 
 export default function App() {
+  useSiteEffects()
   const [articles, setArticles] = useState<Article[]>(sampleArticles)
   const [storeProducts, setStoreProducts] = useState<StoreProduct[]>([])
   const [cartQuantity, setCartQuantity] = useState(() => {
@@ -1755,6 +1757,7 @@ export default function App() {
       {cmsPost && !contentLoading && (
         <div className="reading-progress" ref={progressRef} aria-hidden="true" />
       )}
+      <PageProgress />
       <div className="ambient ambient-one" />
       <div className="ambient ambient-two" />
 
@@ -2022,15 +2025,17 @@ export default function App() {
               </div>
             </section>
 
+            <TopicTicker items={subjectCards.map((card) => card.label)} />
+
             <section className="stats-strip" aria-label="Nano Digest at a glance">
               {totalPages > 0 && (
                 <div className="stat">
-                  <strong>{totalStories.toLocaleString('en-IN')}</strong>
+                  <strong><CountUp value={totalStories} /></strong>
                   <span>stories published</span>
                 </div>
               )}
               <div className="stat">
-                <strong>{subjectCards.length}</strong>
+                <strong><CountUp value={subjectCards.length} duration={900} /></strong>
                 <span>science subject areas</span>
               </div>
               <div className="stat">
