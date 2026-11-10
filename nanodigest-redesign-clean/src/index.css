@@ -811,6 +811,11 @@ body::before {
   overflow: hidden;
 }
 
+/* Homepage leaderboard shown above the fold, directly under the intro. */
+.ad-slot.ad-slot--above-fold {
+  margin: 8px auto 20px;
+}
+
 .ad-slot-label {
   align-self: center;
   font-size: 8px;

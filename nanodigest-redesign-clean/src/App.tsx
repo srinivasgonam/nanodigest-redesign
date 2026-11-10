@@ -1954,6 +1954,8 @@ export default function App() {
               </p>
             </section>
 
+            <AdSlot placement="home-leaderboard" className="ad-slot--above-fold" />
+
             <section className="featured-grid" aria-label="Featured stories">
               <button
                 className="hero-story"
@@ -2019,8 +2021,6 @@ export default function App() {
                 ))}
               </div>
             </section>
-
-            <AdSlot placement="home-leaderboard" />
 
             <section className="stats-strip" aria-label="Nano Digest at a glance">
               {totalPages > 0 && (

@@ -218,12 +218,9 @@ test('known articles match by stable slug or exact title, never by ID modulo', (
 
 test('featured homepage JSX is bound to the static curated configuration', () => {
   const featuredStart = appSource.indexOf('<section className="featured-grid"')
-  const leaderboardStart = appSource.indexOf(
-    '<AdSlot placement="home-leaderboard"',
-    featuredStart,
-  )
-  assert.ok(featuredStart !== -1 && leaderboardStart > featuredStart)
-  const featuredBlock = appSource.slice(featuredStart, leaderboardStart)
+  const featuredEnd = appSource.indexOf('<section className="stats-strip"', featuredStart)
+  assert.ok(featuredStart !== -1 && featuredEnd > featuredStart)
+  const featuredBlock = appSource.slice(featuredStart, featuredEnd)
 
   assert.match(featuredBlock, /curatedHomepageStories\.hero\.image/)
   assert.match(featuredBlock, /curatedHomepageStories\.hero\.title/)
