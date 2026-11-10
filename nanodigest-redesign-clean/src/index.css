@@ -2039,3 +2039,82 @@ footer {
     transition: none;
   }
 }
+
+/* ===========================================================================
+   Impact layer: motion, depth and richer hover states
+=========================================================================== */
+@keyframes nd-rise {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes nd-drift {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(2%, -3%, 0) scale(1.08); }
+}
+
+@keyframes nd-sheen {
+  from { background-position: 0% 50%; }
+  to { background-position: 200% 50%; }
+}
+
+.intro, .ad-slot--above-fold, .featured-grid, .stats-strip {
+  animation: nd-rise .8s cubic-bezier(.2, .7, .2, 1) both;
+}
+.ad-slot--above-fold { animation-delay: .1s; }
+.featured-grid { animation-delay: .2s; }
+.stats-strip { animation-delay: .3s; }
+
+
+.intro h1 .typewriter-accent {
+  background: linear-gradient(90deg, #8d0f10, #e63946, #ff8a5c, #8d0f10);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: nd-sheen 6s linear infinite;
+}
+
+.hero-story {
+  box-shadow: 0 30px 60px -24px rgba(141, 15, 16, .45);
+  transition: transform .5s cubic-bezier(.2, .7, .2, 1), box-shadow .5s ease;
+}
+.hero-story img { transition: transform 1.2s cubic-bezier(.2, .7, .2, 1); }
+.hero-story:hover { transform: translateY(-4px); box-shadow: 0 44px 80px -26px rgba(141, 15, 16, .55); }
+.hero-story:hover img { transform: scale(1.06); }
+
+.pick-story, .article-card, .subject-card, .stat {
+  transition: transform .35s cubic-bezier(.2, .7, .2, 1), box-shadow .35s ease, background .25s ease;
+}
+.pick-story:hover, .article-card:hover, .subject-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 22px 40px -18px rgba(141, 15, 16, .35);
+}
+.pick-image img, .article-card img { transition: transform .8s cubic-bezier(.2, .7, .2, 1); }
+.pick-story:hover .pick-image img, .article-card:hover img { transform: scale(1.07); }
+
+.primary-button {
+  background-image: linear-gradient(135deg, #8d0f10, #c91212 55%, #e63946);
+  box-shadow: 0 12px 26px -10px rgba(201, 18, 18, .65);
+}
+.primary-button:hover { box-shadow: 0 18px 34px -10px rgba(201, 18, 18, .8); }
+
+.stats-strip {
+  box-shadow: 0 18px 40px -26px rgba(141, 15, 16, .5);
+  backdrop-filter: blur(6px);
+}
+.stat:hover { background: rgba(246, 201, 201, .3); }
+.stat strong {
+  background: linear-gradient(135deg, #8d0f10, #e63946);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+html { scroll-behavior: smooth; }
+
+@media (prefers-reduced-motion: reduce) {
+  .intro, .ad-slot--above-fold, .featured-grid, .stats-strip,
+  .intro h1 .typewriter-accent { animation: none; }
+  .hero-story, .hero-story img, .pick-story, .article-card { transition: none; }
+}
