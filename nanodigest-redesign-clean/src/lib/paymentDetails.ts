@@ -22,7 +22,7 @@ export const bankTransfer = {
    * connected (the GitHub Pages site). The customer's own email app opens with
    * the order filled in. Leave empty to disable.
    */
-  orderEmail: '',
+  orderEmail: 'typicalcreatives@gmail.com',
 }
 
 export const bankTransferEnabled = Boolean(
