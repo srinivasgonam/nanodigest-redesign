@@ -1,6 +1,7 @@
 import { type ReactElement, useEffect, useMemo, useRef, useState } from 'react'
 import DOMPurify from 'dompurify'
 import nanoDigestLogo from '../assets/images/nanodigest-logo.png'
+import bookCover from '../assets/images/book-cover.jpg'
 import { FORMS_UNAVAILABLE_MESSAGE, contentUrl, formUrl } from './lib/api'
 import {
   curatedHomepageStories,
@@ -1795,6 +1796,23 @@ export default function App() {
               >
                 <Icon name="whatsapp" size={20} />
                 <span>WhatsApp</span>
+              </a>
+              <a
+                className="masthead-book-link"
+                href="/shop/"
+                onClick={(event) => {
+                  event.preventDefault()
+                  navigateToPath('/shop/')
+                }}
+                aria-label="Buy the book Essentials of Nanoscience and Nanotechnology in the shop"
+                title="Essentials of Nanoscience and Nanotechnology – visit the shop"
+              >
+                <img
+                  src={bookCover}
+                  alt="Essentials of Nanoscience and Nanotechnology book cover"
+                  width={320}
+                  height={423}
+                />
               </a>
             </div>
           </div>
