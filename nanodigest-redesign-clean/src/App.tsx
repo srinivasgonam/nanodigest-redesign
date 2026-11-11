@@ -86,10 +86,34 @@ type StoreProduct = {
   images: Array<{ src: string; alt: string }>
   prices: {
     price: string
+    regular_price?: string
     currency_code: string
     currency_symbol: string
     currency_minor_unit: number
   }
+}
+
+/**
+ * Used when the live WooCommerce store cannot be reached from the browser
+ * (the store API sends no CORS headers, so the static site never receives it).
+ * Keeps the shop, cart and checkout working on this site without leaving it.
+ */
+const fallbackStoreProduct: StoreProduct = {
+  id: 5317,
+  name: 'Essentials of Nanoscience and Nanotechnology',
+  slug: 'essentials-of-nanoscience-and-nanotechnology',
+  permalink: 'https://nanodigest.in/product/essentials-of-nanoscience-and-nanotechnology/',
+  short_description:
+    '<p>A comprehensive guide covering the fundamentals and applications of nanoscience and nanotechnology, written by Dr Narasimha Reddy Katta.</p>',
+  description: '',
+  images: [{ src: bookCover, alt: 'Essentials of Nanoscience and Nanotechnology book cover' }],
+  prices: {
+    price: '125000',
+    regular_price: '145000',
+    currency_code: 'INR',
+    currency_symbol: '₹',
+    currency_minor_unit: 2,
+  },
 }
 
 const pagePaths: Record<Exclude<PageKey, 'home'>, string> = {
@@ -399,7 +423,9 @@ export default function App() {
   const [cmsProduct, setCmsProduct] = useState<WordPressProduct | null>(null)
   const [contentLoading, setContentLoading] = useState(false)
   const [contentError, setContentError] = useState('')
-  const [shopError, setShopError] = useState('')
+  const [, setShopError] = useState('')
+  const [shopQuantity, setShopQuantity] = useState(1)
+  const [justAdded, setJustAdded] = useState(false)
   const [cookieChoice, setCookieChoice] = useState<string | null>(() =>
     readStoredValue(COOKIE_CHOICE_KEY),
   )
@@ -461,16 +487,24 @@ export default function App() {
   const topicOptions = contentCategories.length
     ? ['All stories', ...contentCategories.map((category) => textFromHtml(category.name))]
     : topics
-  const storeProduct = storeProducts[0]
-  const productPrice = storeProduct
-    ? Number(storeProduct.prices.price) / 10 ** storeProduct.prices.currency_minor_unit
-    : 0
-  const formattedProductPrice = storeProduct
-    ? new Intl.NumberFormat('en-IN', {
-        style: 'currency',
-        currency: storeProduct.prices.currency_code,
-      }).format(productPrice)
-    : ''
+  const storeProduct: StoreProduct = storeProducts[0] ?? fallbackStoreProduct
+  const formatStorePrice = (amount: number) =>
+    new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: storeProduct.prices.currency_code,
+      maximumFractionDigits: Number.isInteger(amount) ? 0 : 2,
+    }).format(amount)
+  const productPrice = Number(storeProduct.prices.price) / 10 ** storeProduct.prices.currency_minor_unit
+  const formattedProductPrice = formatStorePrice(productPrice)
+  const regularProductPrice =
+    Number(storeProduct.prices.regular_price || 0) / 10 ** storeProduct.prices.currency_minor_unit
+  const productOnSale = regularProductPrice > productPrice
+
+  useEffect(() => {
+    if (!justAdded) return
+    const timer = window.setTimeout(() => setJustAdded(false), 1800)
+    return () => window.clearTimeout(timer)
+  }, [justAdded])
 
   useEffect(() => {
     window.localStorage.setItem('nano-digest-cart-quantity', String(cartQuantity))
@@ -1081,14 +1115,15 @@ export default function App() {
   }
 
   const addToCart = (quantity = 1) => {
-    if (!storeProduct) return
     setCartQuantity((current) => Math.min(20, current + quantity))
     setOrderStatus(null)
+    setShopQuantity(1)
+    setJustAdded(true)
   }
 
   const handleOrderSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    if (!storeProduct || cartQuantity < 1) {
+    if (cartQuantity < 1) {
       setOrderStatus({ type: 'error', message: 'Your cart is empty.' })
       return
     }
@@ -1099,10 +1134,7 @@ export default function App() {
       // when the client has provided an address for orders.
       const orderEmail = bankTransfer.orderEmail.trim()
       if (bankTransferEnabled && orderEmail) {
-        const total = new Intl.NumberFormat('en-IN', {
-          style: 'currency',
-          currency: storeProduct.prices.currency_code,
-        }).format(productPrice * cartQuantity)
+        const total = formatStorePrice(productPrice * cartQuantity)
         const body = [
           `Order: ${storeProduct.name} x ${cartQuantity}`,
           `Total: ${total}`,
@@ -1529,7 +1561,7 @@ export default function App() {
             {cmsProduct && (
               <div className="shop-purchase-row">
                 <strong>{formattedProductPrice || 'Price currently unavailable'}</strong>
-                <button className="primary-button" onClick={() => addToCart()} disabled={!storeProduct}>
+                <button className="primary-button" onClick={() => addToCart()} disabled={cartQuantity >= 20}>
                   Add to cart <Icon name="cart" size={17} />
                 </button>
               </div>
@@ -1562,73 +1594,54 @@ export default function App() {
         <h1>Shop</h1>
         <p>Books and resources from Nano Digest.</p>
       </div>
-      {shopError && !storeProduct && (
-        <div className="alert error" role="status">
-          The live store is temporarily unavailable. You can still view and buy the book on the original Nano Digest shop.
-        </div>
-      )}
       <div className="shop-grid">
-        {!storeProduct && (
         <article className="shop-product-card">
           <div className="shop-product-card-media">
             <img
-              src="https://nanodigest.in/wp-content/uploads/2022/10/ENSNT-Main-scaled.jpg"
-              alt="Essentials of Nanoscience and Nanotechnology book cover"
-              loading="lazy"
+              src={storeProduct.images[0]?.src || bookCover}
+              alt={storeProduct.images[0]?.alt || storeProduct.name}
             />
           </div>
           <div className="shop-product-card-copy">
             <span className="category-label">NANO DIGEST BOOKS</span>
-            <span className="shop-sale-badge">SALE</span>
-            <h2>Essentials of Nanoscience and Nanotechnology</h2>
+            <h2>{storeProduct.name}</h2>
             <div className="shop-price-row">
-              <del className="shop-price-original">₹1,450</del>
-              <strong className="shop-price-current">₹1,250</strong>
+              <strong className="shop-price-current">{formattedProductPrice}</strong>
+              {productOnSale && <del className="shop-price-original">{formatStorePrice(regularProductPrice)}</del>}
+              {productOnSale && <span className="shop-sale-badge">SALE</span>}
             </div>
-            <p className="shop-product-description">
-              A comprehensive guide covering the fundamentals and applications of nanoscience and nanotechnology.
-            </p>
-            <div className="cta-row">
-              <a
-                className="primary-button"
-                href="https://nanodigest.in/product/essentials-of-nanoscience-and-nanotechnology/"
-                target="_blank"
-                rel="noopener noreferrer"
+            <div
+              className="shop-product-description"
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(storeProduct.short_description || storeProduct.description) }}
+            />
+            <div className="shop-buy-row">
+              <div className="quantity-control" role="group" aria-label="Quantity">
+                <button type="button" aria-label="Decrease quantity" disabled={shopQuantity <= 1} onClick={() => setShopQuantity((value) => Math.max(1, value - 1))}>−</button>
+                <span aria-live="polite">{shopQuantity}</span>
+                <button type="button" aria-label="Increase quantity" disabled={cartQuantity + shopQuantity >= 20} onClick={() => setShopQuantity((value) => Math.min(20, value + 1))}>+</button>
+              </div>
+              <button
+                type="button"
+                className="primary-button shop-add-button"
+                onClick={() => addToCart(shopQuantity)}
+                disabled={cartQuantity >= 20}
               >
-                View Details / Buy Now <Icon name="diagonal" size={16} />
-              </a>
-              <button className="secondary-button" onClick={() => navigateToPath('/')}>
-                Back to home
+                {justAdded ? 'Added to cart ✓' : <>Add to cart <Icon name="cart" size={17} /></>}
               </button>
             </div>
+            {cartQuantity > 0 && (
+              <div className="shop-cart-status" role="status">
+                <span>
+                  {cartQuantity} in your cart · {formatStorePrice(productPrice * cartQuantity)}
+                </span>
+                <div className="shop-cart-status-actions">
+                  <button type="button" className="secondary-button" onClick={() => navigateToPath('/cart/')}>View cart</button>
+                  <button type="button" className="primary-button" onClick={() => navigateToPath('/checkout/')}>Checkout <Icon name="arrow" size={16} /></button>
+                </div>
+              </div>
+            )}
           </div>
         </article>
-        )}
-        {!storeProductsLoaded ? null : storeProduct ? (
-          <article className="shop-product-card">
-            <div className="shop-product-card-media">
-              <img
-                src={storeProduct.images[0]?.src || photo('photo-1532012197267-da84d127e765')}
-                alt={storeProduct.images[0]?.alt || storeProduct.name}
-                loading="lazy"
-              />
-            </div>
-            <div className="shop-product-card-copy">
-              <span className="category-label">NANO DIGEST BOOKS</span>
-              <h2>{storeProduct.name}</h2>
-              <strong className="shop-price-current">{formattedProductPrice}</strong>
-              <div className="cms-content" dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(storeProduct.short_description || storeProduct.description) }} />
-              <div className="cta-row">
-                <button className="primary-button" onClick={() => addToCart()}>
-                  Add to cart <Icon name="cart" size={17} />
-                </button>
-                <button className="secondary-button" onClick={() => navigateToPath('/cart/')}>
-                  View cart ({cartQuantity})
-                </button>
-              </div>
-            </div>
-          </article>
-        ) : null}
       </div>
     </section>
   )
@@ -1644,9 +1657,9 @@ export default function App() {
           <p>Your cart is empty.</p>
           <button className="primary-button" onClick={() => navigateToPath('/shop/')}>Browse the shop <Icon name="arrow" size={16} /></button>
         </div>
-      ) : storeProduct ? (
+      ) : (
         <div className="cart-line">
-          <img src={storeProduct.images[0]?.src || photo('photo-1532012197267-da84d127e765')} alt={storeProduct.images[0]?.alt || storeProduct.name} />
+          <img src={storeProduct.images[0]?.src || bookCover} alt={storeProduct.images[0]?.alt || storeProduct.name} />
           <div className="cart-line-copy">
             <h2>{storeProduct.name}</h2>
             <span>{formattedProductPrice} each</span>
@@ -1656,10 +1669,8 @@ export default function App() {
             <span>{cartQuantity}</span>
             <button aria-label="Increase quantity" disabled={cartQuantity >= 20} onClick={() => setCartQuantity((value) => Math.min(20, value + 1))}>+</button>
           </div>
-          <strong className="cart-subtotal">{new Intl.NumberFormat('en-IN', { style: 'currency', currency: storeProduct.prices.currency_code }).format(productPrice * cartQuantity)}</strong>
+          <strong className="cart-subtotal">{formatStorePrice(productPrice * cartQuantity)}</strong>
         </div>
-      ) : (
-        <p className="catalog-loading">Loading cart…</p>
       )}
       {cartQuantity > 0 && (
         <div className="cart-actions">
@@ -1704,8 +1715,8 @@ export default function App() {
       ) : (
         <>
           <div className="checkout-summary">
-            <span>{storeProduct?.name} × {cartQuantity}</span>
-            <strong>{storeProduct ? new Intl.NumberFormat('en-IN', { style: 'currency', currency: storeProduct.prices.currency_code }).format(productPrice * cartQuantity) : formattedProductPrice}</strong>
+            <span>{storeProduct.name} × {cartQuantity}</span>
+            <strong>{formatStorePrice(productPrice * cartQuantity)}</strong>
           </div>
           <form className="form-panel checkout-form" onSubmit={handleOrderSubmit}>
             <div className="field-grid">
@@ -1754,7 +1765,7 @@ export default function App() {
               <p className="payment-note">This records an order request only. No payment is collected online; the Nano Digest team will contact you to complete the order.</p>
             )}
             {orderStatus && <div className={`alert ${orderStatus.type}`} role="status">{orderStatus.message}</div>}
-            <button className="primary-button" type="submit" disabled={!storeProduct}>{bankTransferEnabled ? 'Submit order' : 'Submit order request'} <Icon name="arrow" size={16} /></button>
+            <button className="primary-button" type="submit">{bankTransferEnabled ? 'Submit order' : 'Submit order request'} <Icon name="arrow" size={16} /></button>
           </form>
         </>
       )}
