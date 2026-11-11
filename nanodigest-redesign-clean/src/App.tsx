@@ -3,6 +3,7 @@ import DOMPurify from 'dompurify'
 import nanoDigestLogo from '../assets/images/nanodigest-logo.png'
 import bookCover from '../assets/images/book-cover.jpg'
 import { FORMS_UNAVAILABLE_MESSAGE, contentUrl, formUrl } from './lib/api'
+import { bankTransfer, bankTransferEnabled } from './lib/paymentDetails'
 import {
   curatedHomepageStories,
   resolveArticleImage,
@@ -448,7 +449,9 @@ export default function App() {
     email: '',
     phone: '',
     address: '',
+    paymentReference: '',
   })
+  const [copiedField, setCopiedField] = useState('')
   const searchRef = useRef<HTMLInputElement>(null)
   const categoriesRef = useRef<HTMLDivElement>(null)
   const categoriesTriggerRef = useRef<HTMLButtonElement>(null)
@@ -1092,6 +1095,33 @@ export default function App() {
 
     const endpoint = formUrl('orders')
     if (!endpoint) {
+      // No backend (static preview): hand the order to the customer's email app
+      // when the client has provided an address for orders.
+      const orderEmail = bankTransfer.orderEmail.trim()
+      if (bankTransferEnabled && orderEmail) {
+        const total = new Intl.NumberFormat('en-IN', {
+          style: 'currency',
+          currency: storeProduct.prices.currency_code,
+        }).format(productPrice * cartQuantity)
+        const body = [
+          `Order: ${storeProduct.name} x ${cartQuantity}`,
+          `Total: ${total}`,
+          `Payment reference (UTR): ${checkoutForm.paymentReference || 'Not provided yet'}`,
+          '',
+          `Name: ${checkoutForm.name}`,
+          `Email: ${checkoutForm.email}`,
+          `Phone: ${checkoutForm.phone || 'Not provided'}`,
+          `Delivery address: ${checkoutForm.address}`,
+        ].join('\n')
+        window.location.href = `mailto:${orderEmail}?subject=${encodeURIComponent(
+          `Nano Digest order: ${storeProduct.name}`,
+        )}&body=${encodeURIComponent(body)}`
+        setOrderStatus({
+          type: 'success',
+          message: `Your email app should open with the order filled in. Press send to place it. If it did not open, email these details to ${orderEmail}.`,
+        })
+        return
+      }
       setOrderStatus({ type: 'error', message: FORMS_UNAVAILABLE_MESSAGE })
       return
     }
@@ -1110,7 +1140,7 @@ export default function App() {
 
       setOrderStatus({ type: 'success', message: payload.message })
       setCartQuantity(0)
-      setCheckoutForm({ name: '', email: '', phone: '', address: '' })
+      setCheckoutForm({ name: '', email: '', phone: '', address: '', paymentReference: '' })
     } catch (error) {
       setOrderStatus({
         type: 'error',
@@ -1640,6 +1670,26 @@ export default function App() {
     </section>
   )
 
+  const copyBankValue = async (label: string, value: string) => {
+    try {
+      await navigator.clipboard.writeText(value)
+      setCopiedField(label)
+      window.setTimeout(() => setCopiedField(''), 1800)
+    } catch {
+      /* clipboard unavailable – the value is still visible to copy by hand */
+    }
+  }
+
+  const bankRows = [
+    { label: 'Account name', value: bankTransfer.accountName },
+    { label: 'Account number', value: bankTransfer.accountNumber },
+    { label: 'IFSC', value: bankTransfer.ifsc },
+    { label: 'Bank', value: bankTransfer.bankName },
+    { label: 'Branch', value: bankTransfer.branch },
+    { label: 'Account type', value: bankTransfer.accountType },
+    { label: 'UPI ID', value: bankTransfer.upiId },
+  ].filter((row) => row.value.trim())
+
   const renderCheckoutRoute = () => (
     <section className="page-panel glass checkout-page checkout-page--flow">
       <div className="page-heading">
@@ -1664,9 +1714,47 @@ export default function App() {
               <label className="field"><span>Phone</span><input type="tel" autoComplete="tel" value={checkoutForm.phone} onChange={(event) => setCheckoutForm({ ...checkoutForm, phone: event.target.value })} /></label>
               <label className="field full-width"><span>Delivery address</span><textarea autoComplete="street-address" rows={4} value={checkoutForm.address} onChange={(event) => setCheckoutForm({ ...checkoutForm, address: event.target.value })} required /></label>
             </div>
-            <p className="payment-note">This records an order request only. No payment is collected online; the Nano Digest team will contact you to complete the order.</p>
+            {bankTransferEnabled ? (
+              <div className="bank-transfer" aria-labelledby="bank-transfer-heading">
+                <h2 id="bank-transfer-heading">Pay by bank transfer</h2>
+                <ol className="bank-steps">
+                  <li>Transfer the order total to the account below using NEFT, IMPS or UPI.</li>
+                  <li>Enter the transaction reference (UTR) from your bank or UPI app.</li>
+                  <li>Submit the order. It is confirmed once the payment is verified.</li>
+                </ol>
+                <dl className="bank-details">
+                  {bankRows.map((row) => (
+                    <div className="bank-row" key={row.label}>
+                      <dt>{row.label}</dt>
+                      <dd>{row.value}</dd>
+                      <button
+                        type="button"
+                        className="bank-copy"
+                        aria-label={`Copy ${row.label}`}
+                        onClick={() => copyBankValue(row.label, row.value)}
+                      >
+                        {copiedField === row.label ? 'Copied' : 'Copy'}
+                      </button>
+                    </div>
+                  ))}
+                </dl>
+                <label className="field">
+                  <span>Transaction reference (UTR)</span>
+                  <input
+                    value={checkoutForm.paymentReference}
+                    onChange={(event) => setCheckoutForm({ ...checkoutForm, paymentReference: event.target.value })}
+                    placeholder="From your bank or UPI app"
+                    maxLength={40}
+                    required
+                  />
+                </label>
+                <p className="payment-note">Payments are verified manually, so confirmation can take up to a working day. Never share your OTP, PIN or card details with anyone.</p>
+              </div>
+            ) : (
+              <p className="payment-note">This records an order request only. No payment is collected online; the Nano Digest team will contact you to complete the order.</p>
+            )}
             {orderStatus && <div className={`alert ${orderStatus.type}`} role="status">{orderStatus.message}</div>}
-            <button className="primary-button" type="submit" disabled={!storeProduct}>Submit order request <Icon name="arrow" size={16} /></button>
+            <button className="primary-button" type="submit" disabled={!storeProduct}>{bankTransferEnabled ? 'Submit order' : 'Submit order request'} <Icon name="arrow" size={16} /></button>
           </form>
         </>
       )}

@@ -277,7 +277,8 @@ export function createServer({ submissionsFile = dataFile } = {}) {
   });
 
   app.post('/api/orders', async (req, res) => {
-    const { name, email, phone, address, items } = req.body || {};
+    const { name, email, phone, address, items, paymentReference } = req.body || {};
+    const cleanReference = sanitizeString(paymentReference).slice(0, 40);
     const cleanName = sanitizeString(name);
     const cleanEmail = sanitizeString(email);
     const cleanPhone = sanitizeString(phone);
@@ -315,13 +316,17 @@ export function createServer({ submissionsFile = dataFile } = {}) {
         address: cleanAddress,
         items: cleanItems,
         status: 'request_received',
-        paymentStatus: 'not_processed',
+        paymentMethod: cleanReference ? 'bank_transfer' : 'not_selected',
+        paymentReference: cleanReference || 'Not provided',
+        paymentStatus: cleanReference ? 'awaiting_verification' : 'not_processed',
         createdAt: new Date().toISOString(),
       };
       data.orders.push(record);
       await writeData(data, submissionsFile);
       return res.status(201).json({
-        message: 'Order request received. No payment has been taken; Nano Digest will contact you to complete it.',
+        message: cleanReference
+          ? 'Order received. Nano Digest will confirm it once your bank transfer is verified.'
+          : 'Order request received. No payment has been taken; Nano Digest will contact you to complete it.',
         record,
       });
     } catch (error) {
