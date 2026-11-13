@@ -1519,14 +1519,16 @@ main:focus {
   color: #8d0f10;
 }
 
-.footer-links button {
+.footer-links button,
+.footer-links a {
   padding: 2px 0;
   font-size: 11px;
   color: #6b6262;
   transition: color .2s ease;
 }
 
-.footer-links button:hover {
+.footer-links button:hover,
+.footer-links a:hover {
   color: #c91212;
 }
 
@@ -1947,7 +1949,8 @@ footer {
   padding-bottom: 28px;
 }
 
-.footer-links button {
+.footer-links button,
+.footer-links a {
   font-size: 12px;
   transition: color .2s ease, transform .2s ease;
 }
@@ -1959,7 +1962,8 @@ footer {
     box-shadow: 0 16px 36px rgba(141, 15, 16, .12);
   }
 
-  .footer-links button:hover {
+  .footer-links button:hover,
+.footer-links a:hover {
     transform: translateX(3px);
   }
 }
@@ -2517,3 +2521,47 @@ html { scroll-behavior: smooth; }
     grid-column: 1 / -1;
   }
 }
+
+/* Spam trap: present for bots, never shown or announced to people. */
+.form-trap {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+/* Nano TV player */
+.cms-video {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  margin: 0 auto 30px;
+  overflow: hidden;
+  border-radius: 14px;
+  background: #111;
+  box-shadow: 0 18px 40px rgba(70, 20, 20, .14);
+}
+
+.cms-video iframe,
+.cms-content iframe {
+  width: 100%;
+  border: 0;
+}
+
+.cms-video iframe {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+}
+
+.cms-content iframe {
+  aspect-ratio: 16 / 9;
+  height: auto;
+  border-radius: 12px;
+}
+
+.footer-links a {
+  display: block;
+  text-decoration: none;
+}
+

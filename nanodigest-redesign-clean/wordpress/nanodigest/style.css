@@ -1,0 +1,12 @@
+/*
+Theme Name: Nano Digest
+Theme URI: https://nanodigest.in/
+Description: The redesigned Nano Digest website. Content, the shop and all settings are still managed in WordPress; this theme only changes what visitors see. Works best with the "NanoDigest Backend" plugin, which handles the forms and orders.
+Version: 2.0.0
+Requires at least: 6.0
+Requires PHP: 7.4
+Author: Nano Digest
+Text Domain: nanodigest
+*/
+
+/* The website's styles are in dist/assets and are loaded by functions.php. */

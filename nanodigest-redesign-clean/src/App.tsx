@@ -1,8 +1,9 @@
 import { type ReactElement, useEffect, useMemo, useRef, useState } from 'react'
-import DOMPurify from 'dompurify'
 import nanoDigestLogo from '../assets/images/nanodigest-logo.png'
 import bookCover from '../assets/images/book-cover.jpg'
-import { FORMS_UNAVAILABLE_MESSAGE, contentUrl, formUrl } from './lib/api'
+import { FORMS_UNAVAILABLE_MESSAGE, contentUrl, formUrl, submitForm } from './lib/api'
+import { accountUrl, externalCookieBanner, routerBasePath } from './lib/runtime'
+import { sanitizeCmsHtml, videoEmbedUrl } from './lib/sanitize'
 import { bankTransfer, bankTransferEnabled } from './lib/paymentDetails'
 import {
   curatedHomepageStories,
@@ -18,7 +19,7 @@ import {
 import { Typewriter } from './components/Typewriter'
 import { CountUp, PageProgress, TopicTicker, useSiteEffects } from './components/Effects'
 
-const basePath = import.meta.env.BASE_URL.replace(/\/$/, '')
+const basePath = routerBasePath
 
 function internalPathFromLocation(pathname: string) {
   if (!basePath) return pathname || '/'
@@ -62,6 +63,8 @@ type WordPressPost = {
     'wp:featuredmedia'?: Array<{ source_url: string }>
   }
   content?: { rendered: string }
+  /** Video address for Nano TV posts (added by the nanodigest-backend plugin). */
+  nd_video_url?: string
 }
 
 type WordPressPage = {
@@ -406,7 +409,7 @@ export default function App() {
   const [articles, setArticles] = useState<Article[]>(sampleArticles)
   const [storeProducts, setStoreProducts] = useState<StoreProduct[]>([])
   const [cartQuantity, setCartQuantity] = useState(() => {
-    const stored = Number(window.localStorage.getItem('nano-digest-cart-quantity'))
+    const stored = Number(readStoredValue('nano-digest-cart-quantity'))
     return Number.isInteger(stored) && stored > 0 ? stored : 0
   })
   const [contentCategories, setContentCategories] = useState<WordPressCategory[]>([])
@@ -469,6 +472,9 @@ export default function App() {
     message: '',
   })
   const [status, setStatus] = useState<FormStatus>(null)
+  const [submitting, setSubmitting] = useState(false)
+  // Spam trap: a field people never see. See submitForm in lib/api.ts.
+  const [trap, setTrap] = useState('')
   const [orderStatus, setOrderStatus] = useState<FormStatus>(null)
   const [checkoutForm, setCheckoutForm] = useState({
     name: '',
@@ -507,7 +513,7 @@ export default function App() {
   }, [justAdded])
 
   useEffect(() => {
-    window.localStorage.setItem('nano-digest-cart-quantity', String(cartQuantity))
+    storeValue('nano-digest-cart-quantity', String(cartQuantity))
   }, [cartQuantity])
 
   useEffect(() => {
@@ -810,7 +816,7 @@ export default function App() {
           contentUrl('/wp/v2/posts', {
             slug,
             _embed: 1,
-            _fields: 'id,date,slug,link,title,excerpt,content,categories,featured_media,_embedded,_links',
+            _fields: 'id,date,slug,link,title,excerpt,content,categories,featured_media,nd_video_url,_embedded,_links',
           }),
           { signal: controller.signal },
         )
@@ -1006,6 +1012,7 @@ export default function App() {
 
   const handleNewsletterSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (submitting) return
 
     const endpoint = formUrl('newsletter')
     if (!endpoint) {
@@ -1013,33 +1020,24 @@ export default function App() {
       return
     }
 
+    setSubmitting(true)
     try {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newsletterForm),
-      })
-
-      const payload = await response.json()
-      if (!response.ok) {
-        throw new Error(payload.message || 'Unable to subscribe.')
-      }
-
+      await submitForm(endpoint, { ...newsletterForm, website_url: trap }, 'Subscription could not be completed.')
       setStatus({ type: 'success', message: 'Subscribed successfully — welcome to the Nano Digest digest.' })
       setNewsletterForm({ name: '', email: '', interest: 'All stories' })
     } catch (error) {
       setStatus({
         type: 'error',
-        message:
-          error instanceof Error
-            ? error.message
-            : 'Subscription could not be completed.',
+        message: error instanceof Error ? error.message : 'Subscription could not be completed.',
       })
+    } finally {
+      setSubmitting(false)
     }
   }
 
   const handleContactSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (submitting) return
 
     const endpoint = formUrl('contact')
     if (!endpoint) {
@@ -1047,33 +1045,24 @@ export default function App() {
       return
     }
 
+    setSubmitting(true)
     try {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(contactForm),
-      })
-
-      const payload = await response.json()
-      if (!response.ok) {
-        throw new Error(payload.message || 'Unable to send your message.')
-      }
-
+      await submitForm(endpoint, { ...contactForm, website_url: trap }, 'Your message could not be sent.')
       setStatus({ type: 'success', message: 'Your message was sent successfully.' })
       setContactForm({ name: '', email: '', company: '', message: '' })
     } catch (error) {
       setStatus({
         type: 'error',
-        message:
-          error instanceof Error
-            ? error.message
-            : 'Your message could not be sent.',
+        message: error instanceof Error ? error.message : 'Your message could not be sent.',
       })
+    } finally {
+      setSubmitting(false)
     }
   }
 
   const handleAdvertiseSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (submitting) return
 
     const endpoint = formUrl('advertise')
     if (!endpoint) {
@@ -1081,36 +1070,18 @@ export default function App() {
       return
     }
 
+    setSubmitting(true)
     try {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(advertiseForm),
-      })
-
-      const payload = await response.json()
-      if (!response.ok) {
-        throw new Error(payload.message || 'Unable to submit partnership request.')
-      }
-
+      await submitForm(endpoint, { ...advertiseForm, website_url: trap }, 'Partnership request could not be submitted.')
       setStatus({ type: 'success', message: 'Partnership request submitted successfully.' })
-      setAdvertiseForm({
-        company: '',
-        contact: '',
-        email: '',
-        website: '',
-        budget: '',
-        goal: '',
-        message: '',
-      })
+      setAdvertiseForm({ company: '', contact: '', email: '', website: '', budget: '', goal: '', message: '' })
     } catch (error) {
       setStatus({
         type: 'error',
-        message:
-          error instanceof Error
-            ? error.message
-            : 'Partnership request could not be submitted.',
+        message: error instanceof Error ? error.message : 'Partnership request could not be submitted.',
       })
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -1123,6 +1094,7 @@ export default function App() {
 
   const handleOrderSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    if (submitting) return
     if (cartQuantity < 1) {
       setOrderStatus({ type: 'error', message: 'Your cart is empty.' })
       return
@@ -1158,19 +1130,19 @@ export default function App() {
       return
     }
 
+    setSubmitting(true)
     try {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const message = await submitForm(
+        endpoint,
+        {
           ...checkoutForm,
+          website_url: trap,
           items: [{ productId: storeProduct.id, name: storeProduct.name, quantity: cartQuantity }],
-        }),
-      })
-      const payload = await response.json()
-      if (!response.ok) throw new Error(payload.message || 'Unable to save your order request.')
+        },
+        'Unable to save your order request.',
+      )
 
-      setOrderStatus({ type: 'success', message: payload.message })
+      setOrderStatus({ type: 'success', message: message || 'Order received.' })
       setCartQuantity(0)
       setCheckoutForm({ name: '', email: '', phone: '', address: '', paymentReference: '' })
     } catch (error) {
@@ -1178,6 +1150,8 @@ export default function App() {
         type: 'error',
         message: error instanceof Error ? error.message : 'Unable to save your order request.',
       })
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -1308,7 +1282,7 @@ export default function App() {
                   onChange={(event) =>
                     setAdvertiseForm({ ...advertiseForm, budget: event.target.value })
                   }
-                  placeholder="$5K - $20K"
+                  placeholder="₹50,000 – ₹2,00,000"
                 />
               </label>
               <label className="field">
@@ -1334,6 +1308,7 @@ export default function App() {
               <span>Tell us about your campaign</span>
               <textarea
                 rows={5}
+                maxLength={5000}
                 value={advertiseForm.message}
                 onChange={(event) =>
                   setAdvertiseForm({ ...advertiseForm, message: event.target.value })
@@ -1342,11 +1317,15 @@ export default function App() {
               />
             </label>
 
+            <label className="form-trap" aria-hidden="true">
+              <span>Leave this field empty</span>
+              <input tabIndex={-1} autoComplete="off" name="website_url" value={trap} onChange={(event) => setTrap(event.target.value)} />
+            </label>
             {status && (
-              <div className={`alert ${status.type}`}>{status.message}</div>
+              <div className={`alert ${status.type}`} role="status">{status.message}</div>
             )}
 
-            <button className="primary-button" type="submit">
+            <button className="primary-button" type="submit" disabled={submitting}>
               Send partnership request <Icon name="arrow" size={16} />
             </button>
           </form>
@@ -1399,6 +1378,7 @@ export default function App() {
               <span>Your message</span>
               <textarea
                 rows={6}
+                maxLength={5000}
                 value={contactForm.message}
                 onChange={(event) =>
                   setContactForm({ ...contactForm, message: event.target.value })
@@ -1407,11 +1387,15 @@ export default function App() {
               />
             </label>
 
+            <label className="form-trap" aria-hidden="true">
+              <span>Leave this field empty</span>
+              <input tabIndex={-1} autoComplete="off" name="website_url" value={trap} onChange={(event) => setTrap(event.target.value)} />
+            </label>
             {status && (
-              <div className={`alert ${status.type}`}>{status.message}</div>
+              <div className={`alert ${status.type}`} role="status">{status.message}</div>
             )}
 
-            <button className="primary-button" type="submit">
+            <button className="primary-button" type="submit" disabled={submitting}>
               Send message <Icon name="arrow" size={16} />
             </button>
           </form>
@@ -1467,7 +1451,7 @@ export default function App() {
           <div
             className="cms-content"
             dangerouslySetInnerHTML={{
-              __html: DOMPurify.sanitize(cmsPage.content.rendered),
+              __html: sanitizeCmsHtml(cmsPage.content.rendered),
             }}
           />
         </section>
@@ -1511,7 +1495,11 @@ export default function App() {
 
     const title = cmsPost?.title.rendered || cmsPage?.title.rendered || cmsProduct?.title.rendered
     const markup = cmsPost?.content?.rendered || cmsPage?.content?.rendered || cmsProduct?.content?.rendered || ''
-    const originalUrl = cmsPost?.link || cmsPage?.link || cmsProduct?.link
+    const contentLink = cmsPost?.link || cmsPage?.link || cmsProduct?.link
+    // On the live site the "original" is this very page, so the link is only
+    // useful on preview copies hosted somewhere else.
+    const originalUrl = contentLink && !contentLink.startsWith(window.location.origin) ? contentLink : ''
+    const videoUrl = videoEmbedUrl(cmsPost?.nd_video_url)
     const categoryName = cmsPost?.categories
       .map((id) => contentCategories.find((category) => category.id === id)?.name)
       .filter((name): name is string => Boolean(name))
@@ -1519,7 +1507,7 @@ export default function App() {
       .join(' / ')
     const image = cmsPost?._embedded?.['wp:featuredmedia']?.[0]?.source_url
 
-    const sanitizedMarkup = DOMPurify.sanitize(markup)
+    const sanitizedMarkup = sanitizeCmsHtml(markup)
     const isArticleDetail = Boolean(cmsPost)
     const showArticleAds = adsEnabled && isArticleDetail
     const [contentFirst, contentSecond] = showArticleAds
@@ -1557,7 +1545,20 @@ export default function App() {
                 </div>
               )}
             </div>
-            {image && <img className="cms-detail-image" src={image} alt={textFromHtml(title)} />}
+            {videoUrl ? (
+              <div className="cms-video">
+                <iframe
+                  src={videoUrl}
+                  title={textFromHtml(title)}
+                  loading="lazy"
+                  allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen"
+                  referrerPolicy="strict-origin-when-cross-origin"
+                  allowFullScreen
+                />
+              </div>
+            ) : (
+              image && <img className="cms-detail-image" src={image} alt={textFromHtml(title)} />
+            )}
             {cmsProduct && (
               <div className="shop-purchase-row">
                 <strong>{formattedProductPrice || 'Price currently unavailable'}</strong>
@@ -1612,7 +1613,7 @@ export default function App() {
             </div>
             <div
               className="shop-product-description"
-              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(storeProduct.short_description || storeProduct.description) }}
+              dangerouslySetInnerHTML={{ __html: sanitizeCmsHtml(storeProduct.short_description || storeProduct.description) }}
             />
             <div className="shop-buy-row">
               <div className="quantity-control" role="group" aria-label="Quantity">
@@ -1720,10 +1721,10 @@ export default function App() {
           </div>
           <form className="form-panel checkout-form" onSubmit={handleOrderSubmit}>
             <div className="field-grid">
-              <label className="field"><span>Full name</span><input autoComplete="name" value={checkoutForm.name} onChange={(event) => setCheckoutForm({ ...checkoutForm, name: event.target.value })} required /></label>
+              <label className="field"><span>Full name</span><input autoComplete="name" maxLength={100} value={checkoutForm.name} onChange={(event) => setCheckoutForm({ ...checkoutForm, name: event.target.value })} required /></label>
               <label className="field"><span>Email</span><input type="email" autoComplete="email" value={checkoutForm.email} onChange={(event) => setCheckoutForm({ ...checkoutForm, email: event.target.value })} required /></label>
-              <label className="field"><span>Phone</span><input type="tel" autoComplete="tel" value={checkoutForm.phone} onChange={(event) => setCheckoutForm({ ...checkoutForm, phone: event.target.value })} /></label>
-              <label className="field full-width"><span>Delivery address</span><textarea autoComplete="street-address" rows={4} value={checkoutForm.address} onChange={(event) => setCheckoutForm({ ...checkoutForm, address: event.target.value })} required /></label>
+              <label className="field"><span>Phone</span><input type="tel" autoComplete="tel" maxLength={30} value={checkoutForm.phone} onChange={(event) => setCheckoutForm({ ...checkoutForm, phone: event.target.value })} /></label>
+              <label className="field full-width"><span>Delivery address</span><textarea autoComplete="street-address" rows={4} maxLength={500} value={checkoutForm.address} onChange={(event) => setCheckoutForm({ ...checkoutForm, address: event.target.value })} required /></label>
             </div>
             {bankTransferEnabled ? (
               <div className="bank-transfer" aria-labelledby="bank-transfer-heading">
@@ -1764,8 +1765,12 @@ export default function App() {
             ) : (
               <p className="payment-note">This records an order request only. No payment is collected online; the Nano Digest team will contact you to complete the order.</p>
             )}
+            <label className="form-trap" aria-hidden="true">
+              <span>Leave this field empty</span>
+              <input tabIndex={-1} autoComplete="off" name="website_url" value={trap} onChange={(event) => setTrap(event.target.value)} />
+            </label>
             {orderStatus && <div className={`alert ${orderStatus.type}`} role="status">{orderStatus.message}</div>}
-            <button className="primary-button" type="submit">{bankTransferEnabled ? 'Submit order' : 'Submit order request'} <Icon name="arrow" size={16} /></button>
+            <button className="primary-button" type="submit" disabled={submitting}>{bankTransferEnabled ? 'Submit order' : 'Submit order request'} <Icon name="arrow" size={16} /></button>
           </form>
         </>
       )}
@@ -1778,9 +1783,9 @@ export default function App() {
         <span className="eyebrow">NANO DIGEST / ACCOUNT</span>
         <h1>My account</h1>
       </div>
-      <p>Account sign-in is managed by the original Nano Digest store.</p>
-      <a className="primary-button account-link" href="https://nanodigest.in/my-account/" target="_blank" rel="noreferrer">
-        Open Nano Digest account <Icon name="diagonal" size={16} />
+      <p>Sign in to see your orders and manage your details.</p>
+      <a className="primary-button account-link" href={accountUrl}>
+        Open my account <Icon name="arrow" size={16} />
       </a>
     </section>
   )
@@ -2383,12 +2388,16 @@ export default function App() {
                     </label>
                   </div>
 
+                  <label className="form-trap" aria-hidden="true">
+                    <span>Leave this field empty</span>
+                    <input tabIndex={-1} autoComplete="off" name="website_url" value={trap} onChange={(event) => setTrap(event.target.value)} />
+                  </label>
                   {status && (
-                    <div className={`alert ${status.type}`}>{status.message}</div>
+                    <div className={`alert ${status.type}`} role="status">{status.message}</div>
                   )}
 
                   <div className="email-input">
-                    <button type="submit" aria-label="Join the newsletter">
+                    <button type="submit" aria-label="Join the newsletter" disabled={submitting}>
                       Join the newsletter <Icon name="arrow" size={22} />
                     </button>
                   </div>
@@ -2440,6 +2449,7 @@ export default function App() {
             <button onClick={() => navigateToPath('/category/nano-tv/')}>Nano TV</button>
             <button onClick={() => navigateToPath('/shop/')}>Shop</button>
             <button onClick={() => navigateToPath('/pages/')}>All pages</button>
+            <a href={accountUrl}>My account</a>
           </div>
           <div>
             <h3>Categories</h3>
@@ -2480,7 +2490,7 @@ export default function App() {
         </button>
       )}
 
-      {!cookieChoice && (
+      {!cookieChoice && !externalCookieBanner && (
         <div className="cookie-notice" role="region" aria-label="Cookie notice">
           <p>
             We use essential cookies to make this site work and, only with your consent, optional cookies for analytics and advertising.{' '}

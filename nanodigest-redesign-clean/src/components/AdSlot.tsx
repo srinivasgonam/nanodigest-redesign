@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { externalCookieBanner } from '../lib/runtime'
 
 export type AdFormat = 'leaderboard' | 'in-article' | 'rectangle' | 'sidebar'
 
@@ -74,6 +75,10 @@ export const COOKIE_CHOICE_EVENT = 'nano-digest-cookie-choice'
 const ADSENSE_SCRIPT_ID = 'nano-digest-adsense'
 
 function cookiesAccepted(): boolean {
+  // A WordPress consent plugin (CookieYes) owns the answer when it is active.
+  if (externalCookieBanner) {
+    return /(?:^|;\s*)cookieyes-consent=[^;]*advertisement:yes/.test(document.cookie)
+  }
   try {
     return window.localStorage.getItem(COOKIE_CHOICE_KEY) === 'accepted'
   } catch {

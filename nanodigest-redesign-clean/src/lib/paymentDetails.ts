@@ -1,5 +1,11 @@
+import { runtimeBank } from './runtime'
+
 /**
  * Bank transfer details shown on the checkout page.
+ *
+ * On the live WordPress site, details saved at NanoDigest > Settings in
+ * wp-admin replace the ones below, so the client can change them without a
+ * new build.
  *
  * FILL THESE IN with the details your client gave you. Everything in this file
  * is visible to every visitor of the website, so only enter details the client
@@ -8,7 +14,7 @@
  *
  * While accountNumber or ifsc is empty, the checkout page shows no bank section.
  */
-export const bankTransfer = {
+const builtInBankTransfer = {
   accountName: 'Typical Creatives', // e.g. 'Nano Digest Publications'
   accountNumber: '1439115000002533', // e.g. '123456789012'
   ifsc: 'KVBL0001439', // e.g. 'SBIN0001234'
@@ -24,6 +30,8 @@ export const bankTransfer = {
    */
   orderEmail: 'typicalcreatives@gmail.com',
 }
+
+export const bankTransfer = { ...builtInBankTransfer, ...(runtimeBank ?? {}) }
 
 export const bankTransferEnabled = Boolean(
   bankTransfer.accountNumber.trim() && bankTransfer.ifsc.trim(),
