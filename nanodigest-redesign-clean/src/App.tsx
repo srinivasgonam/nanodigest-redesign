@@ -2001,10 +2001,12 @@ export default function App() {
         <div className="nav-actions">
           <button
             className="search-button"
-            aria-label="Search stories"
+            aria-label="Search all Nano Digest stories"
+            title="Search all Nano Digest stories"
             onClick={() => setSearchOpen(true)}
           >
-            <Icon name="search" />
+            <Icon name="search" size={18} />
+            <span>Search</span>
           </button>
           <button
             className="cart-button"

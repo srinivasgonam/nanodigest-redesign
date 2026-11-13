@@ -2565,3 +2565,26 @@ html { scroll-behavior: smooth; }
   text-decoration: none;
 }
 
+/* --- Labelled search button in the navigation ---------------------- */
+.navigation .search-button {
+  width: auto;
+  gap: 8px;
+  padding: 0 16px 0 13px;
+  border-radius: 999px;
+  border-color: rgba(201, 18, 18, .22);
+  background: rgba(255, 255, 255, .78);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .navigation .search-button {
+    width: 36px;
+    padding: 0;
+  }
+
+  .navigation .search-button span {
+    display: none;
+  }
+}
