@@ -1902,6 +1902,15 @@ export default function App() {
                 <span>WhatsApp</span>
               </a>
               <a
+                className="masthead-social-link masthead-social-facebook"
+                href="https://www.facebook.com/share/1Kqc6Re76V/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Icon name="facebook" size={20} />
+                <span>Facebook</span>
+              </a>
+              <a
                 className="masthead-book-link"
                 href="/shop/"
                 onClick={(event) => {
