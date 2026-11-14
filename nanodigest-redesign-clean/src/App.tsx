@@ -1709,7 +1709,11 @@ export default function App() {
       </div>
       {cartQuantity < 1 ? (
         <div className="empty-cart">
-          <p>Your cart is empty.</p>
+          {orderStatus?.type === 'success' ? (
+            <div className="alert success" role="status">{orderStatus.message}</div>
+          ) : (
+            <p>Your cart is empty.</p>
+          )}
           <button className="secondary-button" onClick={() => navigateToPath('/shop/')}>Return to shop</button>
         </div>
       ) : (

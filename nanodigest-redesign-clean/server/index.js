@@ -211,6 +211,35 @@ export function createServer({ submissionsFile = dataFile, rateLimit = 5 } = {})
     res.json({ status: 'ok' });
   });
 
+  // The website asks for one item with "?slug=" (the WordPress REST form) and
+  // names products "product". Answer those here; plain list requests fall
+  // through to the routes below.
+  app.get(/^\/api\/content\/(posts|pages|products?)\/?$/, (req, res, next) => {
+    const kind = req.params[0];
+    const slug = typeof req.query.slug === 'string' ? req.query.slug.trim().slice(0, 200) : '';
+    if (!slug) {
+      if (kind !== 'product') return next();
+      return proxyWordPress(res, 'product', {
+        per_page: '100',
+        _fields: 'id,date,slug,link,title,excerpt,content,featured_media',
+      });
+    }
+    if (kind === 'posts') {
+      return proxyWordPress(res, 'posts', {
+        slug,
+        _embed: '1',
+        _fields: 'id,date,slug,link,title,excerpt,content,categories,featured_media,_embedded',
+      });
+    }
+    if (kind === 'pages') {
+      return proxyWordPress(res, 'pages', { slug, _fields: 'id,date,slug,link,title,excerpt,content' });
+    }
+    return proxyWordPress(res, 'product', {
+      slug,
+      _fields: 'id,date,slug,link,title,excerpt,content,featured_media',
+    });
+  });
+
   app.get('/api/content/categories', (_req, res) =>
     proxyWordPress(res, 'categories', {
       per_page: '100',
