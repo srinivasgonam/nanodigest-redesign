@@ -201,7 +201,6 @@ const subjectCards = [
 ]
 
 const socialLinks = [
-  { name: 'facebook', label: 'Facebook', href: 'https://www.facebook.com/nanodigest.in' },
   { name: 'x', label: 'X (Twitter)', href: 'https://twitter.com/nanodigest' },
   { name: 'linkedin', label: 'LinkedIn', href: 'https://www.linkedin.com/company/nanodigestin/' },
   { name: 'youtube', label: 'YouTube', href: NANO_TV_URL },

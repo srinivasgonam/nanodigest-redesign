@@ -11,7 +11,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 function nanodigest_backend_setting_defaults() {
 	return array(
-		'notify_email'        => '',
+		'notify_email'        => 'typicalcreatives@gmail.com',
 		'allowed_origins'     => '',
 		'bank_account_name'   => '',
 		'bank_account_number' => '',
