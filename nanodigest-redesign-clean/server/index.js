@@ -193,6 +193,16 @@ async function proxyStoreProducts(res) {
   }
 }
 
+/**
+ * The category a stories request asks for. The website sends "categories"
+ * (WordPress's own name for it); "category" is accepted too. Only one numeric
+ * id is passed on, anything else means "all categories".
+ */
+export function categoryFilter(query) {
+  const value = String((query && (query.categories ?? query.category)) ?? '');
+  return /^\d{1,9}$/.test(value) ? value : undefined;
+}
+
 function pageNumber(value) {
   const parsed = Number.parseInt(value, 10);
   return Number.isFinite(parsed) && parsed > 0 ? String(parsed) : '1';
@@ -300,7 +310,7 @@ export function createServer({ submissionsFile = dataFile, rateLimit = 5 } = {})
     proxyWordPress(res, 'posts', {
       page: pageNumber(req.query.page),
       per_page: '24',
-      categories: /^\d+$/.test(String(req.query.category || '')) ? String(req.query.category) : undefined,
+      categories: categoryFilter(req.query),
       search: typeof req.query.search === 'string' ? req.query.search.trim().slice(0, 100) : undefined,
       _embed: '1',
       _fields: 'id,date,slug,link,title,excerpt,categories,featured_media,_embedded',

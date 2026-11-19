@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { createServer } from '../server/index.js';
+import { categoryFilter, createServer } from '../server/index.js';
 
 async function withServer(callback, options) {
   const app = createServer(options);
@@ -275,4 +275,14 @@ test('counting is not limited like a form', async () => {
       }
     }, { rateLimit: 2, submissionsFile });
   });
+});
+
+test('a stories request keeps the category it asks for', () => {
+  assert.equal(categoryFilter({ categories: '3' }), '3', 'the name the website sends');
+  assert.equal(categoryFilter({ category: '5' }), '5', 'the older name still works');
+  assert.equal(categoryFilter({ categories: '2', category: '9' }), '2');
+  assert.equal(categoryFilter({}), undefined, 'no category means all stories');
+  for (const bad of ['abc', '3,4', '-1', '3 OR 1=1', '', '12345678901', ['3', '4']]) {
+    assert.equal(categoryFilter({ categories: bad }), undefined, `${JSON.stringify(bad)} is not passed on`);
+  }
 });
