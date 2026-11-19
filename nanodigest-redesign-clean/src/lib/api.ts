@@ -127,3 +127,51 @@ export async function submitForm(
 
   return message
 }
+
+/** Totals shown on an article: how many times it was read and shared. */
+export type ArticleStats = { views: number; shares: number }
+
+export type ShareNetwork = 'facebook' | 'x' | 'whatsapp' | 'linkedin' | 'copy'
+
+function readStats(body: unknown): ArticleStats | null {
+  if (!body || typeof body !== 'object') return null
+  const { views, shares } = body as Record<string, unknown>
+  if (typeof views !== 'number' || typeof shares !== 'number') return null
+  if (!Number.isFinite(views) || !Number.isFinite(shares)) return null
+  return { views: Math.max(0, Math.floor(views)), shares: Math.max(0, Math.floor(shares)) }
+}
+
+async function postCounter(
+  route: 'views' | 'shares',
+  payload: Record<string, unknown>,
+  signal?: AbortSignal,
+): Promise<ArticleStats | null> {
+  const endpoint = formUrl(route)
+  // No backend (static preview): the page simply shows no totals.
+  if (!endpoint) return null
+  try {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      // A share opens another tab; let the request finish even if this page is left.
+      keepalive: route === 'shares',
+      signal,
+    })
+    if (!response.ok) return null
+    return readStats(await response.json())
+  } catch {
+    // Counting is a nicety: it must never get in the way of reading the article.
+    return null
+  }
+}
+
+/** Counts one reading of the article and returns the current totals. */
+export function recordArticleView(postId: number, signal?: AbortSignal) {
+  return postCounter('views', { id: postId }, signal)
+}
+
+/** Counts one share (or link copy) and returns the current totals. */
+export function recordArticleShare(postId: number, network: ShareNetwork) {
+  return postCounter('shares', { id: postId, network })
+}

@@ -90,6 +90,53 @@ function isLocalOrigin(origin) {
 }
 
 /** Fixed-window limit per visitor address, kept in memory. */
+// Article totals (views and shares) live in their own small file, beside the
+// submissions file, as { "<article id>": { "views": n, "shares": n } }.
+const SHARE_NETWORKS = new Set(['facebook', 'x', 'whatsapp', 'linkedin', 'copy']);
+
+async function readCounters(filePath) {
+  try {
+    const parsed = JSON.parse((await fs.readFile(filePath, 'utf8')) || '{}');
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+  } catch (error) {
+    if (error.code === 'ENOENT') return {};
+    throw error;
+  }
+}
+
+let counterQueue = Promise.resolve();
+// Adds `amount` (0 just reads) to one total and returns both totals. Runs one
+// after another so two readers arriving together cannot overwrite each other.
+function bumpCounter(filePath, postId, field, amount) {
+  const task = counterQueue.then(async () => {
+    const data = await readCounters(filePath);
+    const entry = data[postId] || {};
+    const totals = {
+      views: Number(entry.views) || 0,
+      shares: Number(entry.shares) || 0,
+    };
+    if (amount > 0) {
+      totals[field] += amount;
+      data[postId] = totals;
+      await fs.mkdir(path.dirname(filePath), { recursive: true });
+      const temporary = `${filePath}.${process.pid}.tmp`;
+      await fs.writeFile(temporary, JSON.stringify(data, null, 2), 'utf8');
+      await fs.rename(temporary, filePath);
+    }
+    return totals;
+  });
+  counterQueue = task.catch(() => {});
+  return task;
+}
+
+function counterPostId(body) {
+  const id = body && body.id;
+  const number = typeof id === 'number' ? id : typeof id === 'string' && /^\d{1,9}$/.test(id) ? Number(id) : NaN;
+  return Number.isInteger(number) && number > 0 && number < 1e9 ? number : 0;
+}
+
+const BOT_PATTERN = /bot|crawl|spider|slurp|facebookexternalhit|headlesschrome|curl\/|wget\/|python-requests/i;
+
 function createRateLimiter({ limit, windowMs }) {
   const hits = new Map();
   return (req, res, next) => {
@@ -196,7 +243,8 @@ export function createServer({ submissionsFile = dataFile, rateLimit = 5 } = {})
     }
     return next();
   });
-  app.post(/^\/api\//, createRateLimiter({ limit: rateLimit, windowMs: 10 * 60 * 1000 }));
+  // Counting a reading or a share is not a form: it has its own, wider limit below.
+  app.post(/^\/api\/(?!(?:views|shares)$)/, createRateLimiter({ limit: rateLimit, windowMs: 10 * 60 * 1000 }));
 
   // Spam trap: the hidden "website_url" field is only ever filled in by bots.
   // Answer as if it worked and store nothing.
@@ -319,6 +367,52 @@ export function createServer({ submissionsFile = dataFile, rateLimit = 5 } = {})
       });
     } catch (error) {
       res.status(500).json({ message: 'Unable to fetch summary data.' });
+    }
+  });
+
+  const countersFile = path.join(path.dirname(submissionsFile), 'counters.json');
+  const counterLimiter = createRateLimiter({ limit: 120, windowMs: 10 * 60 * 1000 });
+  const recentCounts = new Map();
+  // True when this reader already counted the same thing recently.
+  const alreadyCounted = (key, ttlMs) => {
+    const now = Date.now();
+    if (recentCounts.size > 10000) {
+      for (const [stored, expires] of recentCounts) if (expires <= now) recentCounts.delete(stored);
+    }
+    if ((recentCounts.get(key) || 0) > now) return true;
+    recentCounts.set(key, now + ttlMs);
+    return false;
+  };
+
+  app.post('/api/views', counterLimiter, async (req, res) => {
+    const postId = counterPostId(req.body);
+    if (!postId) return res.status(400).json({ message: 'A valid article id is required.' });
+    try {
+      const agent = req.get('user-agent') || '';
+      const countIt = !BOT_PATTERN.test(agent) && !alreadyCounted(`views|${postId}|${req.ip}|${agent}`, 30 * 60 * 1000);
+      const totals = await bumpCounter(countersFile, postId, 'views', countIt ? 1 : 0);
+      res.set('Cache-Control', 'no-store');
+      return res.json(totals);
+    } catch (error) {
+      return res.status(500).json({ message: 'Unable to read the totals.' });
+    }
+  });
+
+  app.post('/api/shares', counterLimiter, async (req, res) => {
+    const postId = counterPostId(req.body);
+    const network = req.body && req.body.network;
+    if (!postId || typeof network !== 'string' || !SHARE_NETWORKS.has(network)) {
+      return res.status(400).json({ message: 'A valid article id and share network are required.' });
+    }
+    try {
+      const agent = req.get('user-agent') || '';
+      const countIt =
+        !BOT_PATTERN.test(agent) && !alreadyCounted(`shares|${network}|${postId}|${req.ip}|${agent}`, 60 * 1000);
+      const totals = await bumpCounter(countersFile, postId, 'shares', countIt ? 1 : 0);
+      res.set('Cache-Control', 'no-store');
+      return res.json(totals);
+    } catch (error) {
+      return res.status(500).json({ message: 'Unable to read the totals.' });
     }
   });
 

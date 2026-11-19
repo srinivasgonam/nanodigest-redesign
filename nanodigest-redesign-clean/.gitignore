@@ -11,3 +11,4 @@ build/
 *-debug.log*
 logs/
 *.log
+server/data/counters.json

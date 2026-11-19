@@ -206,3 +206,73 @@ test('oversized request bodies are rejected without leaking details', async () =
     assert.equal(body.stack, undefined);
   });
 });
+
+test('an article reading is counted once per reader, and totals come back', async () => {
+  await withSubmissionsFile(async (submissionsFile) => {
+    await withServer(async (baseUrl) => {
+      const first = await postJson(baseUrl, 'views', { id: 123 });
+      assert.equal(first.status, 200);
+      assert.deepEqual(await first.json(), { views: 1, shares: 0 });
+
+      const again = await postJson(baseUrl, 'views', { id: '123' });
+      assert.deepEqual(await again.json(), { views: 1, shares: 0 }, 'a refresh does not add a view');
+
+      const other = await postJson(baseUrl, 'views', { id: 124 });
+      assert.deepEqual(await other.json(), { views: 1, shares: 0 }, 'each article has its own total');
+    }, { submissionsFile });
+  });
+});
+
+test('shares are counted per network and survive a restart', async () => {
+  await withSubmissionsFile(async (submissionsFile) => {
+    await withServer(async (baseUrl) => {
+      const facebook = await postJson(baseUrl, 'shares', { id: 7, network: 'facebook' });
+      assert.deepEqual(await facebook.json(), { views: 0, shares: 1 });
+      const repeat = await postJson(baseUrl, 'shares', { id: 7, network: 'facebook' });
+      assert.deepEqual(await repeat.json(), { views: 0, shares: 1 }, 'double click is one share');
+      const copy = await postJson(baseUrl, 'shares', { id: 7, network: 'copy' });
+      assert.deepEqual(await copy.json(), { views: 0, shares: 2 });
+    }, { submissionsFile });
+
+    await withServer(async (baseUrl) => {
+      const response = await postJson(baseUrl, 'views', { id: 7 });
+      assert.deepEqual(await response.json(), { views: 1, shares: 2 }, 'totals are read back from disk');
+    }, { submissionsFile });
+  });
+});
+
+test('search engines and bots do not add to the totals', async () => {
+  await withSubmissionsFile(async (submissionsFile) => {
+    await withServer(async (baseUrl) => {
+      const headers = { 'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1)' };
+      const view = await postJson(baseUrl, 'views', { id: 55 }, headers);
+      assert.deepEqual(await view.json(), { views: 0, shares: 0 });
+      const share = await postJson(baseUrl, 'shares', { id: 55, network: 'x' }, headers);
+      assert.deepEqual(await share.json(), { views: 0, shares: 0 });
+    }, { submissionsFile });
+  });
+});
+
+test('counter endpoints reject bad input', async () => {
+  await withServer(async (baseUrl) => {
+    for (const id of [undefined, null, 0, -1, 'abc', '1; DROP TABLE', 1e12, {}]) {
+      const response = await postJson(baseUrl, 'views', { id });
+      assert.equal(response.status, 400, `id ${JSON.stringify(id)} is refused`);
+    }
+    const unknownNetwork = await postJson(baseUrl, 'shares', { id: 1, network: 'myspace' });
+    assert.equal(unknownNetwork.status, 400);
+    const noNetwork = await postJson(baseUrl, 'shares', { id: 1 });
+    assert.equal(noNetwork.status, 400);
+  });
+});
+
+test('counting is not limited like a form', async () => {
+  await withSubmissionsFile(async (submissionsFile) => {
+    await withServer(async (baseUrl) => {
+      for (let id = 1; id <= 10; id += 1) {
+        const response = await postJson(baseUrl, 'views', { id });
+        assert.equal(response.status, 200, `article ${id} still counted after many readings`);
+      }
+    }, { rateLimit: 2, submissionsFile });
+  });
+});

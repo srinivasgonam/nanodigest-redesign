@@ -7,6 +7,8 @@
  *   POST /wp-json/nanodigest/v1/contact
  *   POST /wp-json/nanodigest/v1/advertise
  *   POST /wp-json/nanodigest/v1/orders
+ *   POST /wp-json/nanodigest/v1/views   (article reading counter, see counters.php)
+ *   POST /wp-json/nanodigest/v1/shares  (article share counter, see counters.php)
  *   GET  /wp-json/nanodigest/v1/health
  * Admin-only:
  *   GET  /wp-json/nanodigest/v1/summary
@@ -89,6 +91,10 @@ function nanodigest_backend_register_rest_routes() {
 		'/advertise'  => 'nanodigest_backend_handle_advertise',
 		'/orders'     => 'nanodigest_backend_handle_orders',
 	);
+
+	// Article totals: counting a reading or a share is public, like the forms.
+	$forms['/views']  = 'nanodigest_backend_handle_views';
+	$forms['/shares'] = 'nanodigest_backend_handle_shares';
 
 	foreach ( $forms as $route => $callback ) {
 		register_rest_route(

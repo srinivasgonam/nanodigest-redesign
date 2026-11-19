@@ -29,6 +29,15 @@ Everything is done at `nanodigest.in/wp-admin`, as before:
 | See and download newsletter subscribers (CSV) | NanoDigest → Newsletter / Dashboard |
 | Change the bank details on the checkout page, and who gets notification emails | NanoDigest → Settings |
 | Customer accounts | Users, and `nanodigest.in/my-account/` for customers |
+| Keep the old theme's view and share totals | NanoDigest → Settings → "Article views and shares" (see below) |
+
+### Share buttons, views and shares on articles
+
+Every article has share buttons (Facebook, X, WhatsApp, LinkedIn, Copy link) under the heading and after the text, and shows how many times it was read and shared.
+
+- A reading is counted once per visitor every 30 minutes, so refreshing the page does not add views. Search engines and other robots are not counted. A share is counted when a visitor clicks a share button or copies the link (once per button per minute).
+- The totals are stored by the plugin in each article (`_nd_views`, `_nd_shares`). The old theme's totals are **not** copied automatically: the new counters start at zero. To keep the old numbers, find the names of the fields the old theme saved them in (for example with a "Show custom fields" plugin on one article, or ask whoever built the old theme) and enter them under NanoDigest → Settings → "Article views and shares". They are then added to the new counts.
+- On the GitHub Pages preview there is no counter, so the buttons work but no totals are shown.
 
 Each contact message, advertising enquiry and order is also emailed to the address set in NanoDigest → Settings.
 
@@ -64,6 +73,7 @@ To update the site later, run `npm run build:wp` again and upload the new theme 
 
 - [ ] Home page, a category page, an article and a Nano TV article open; refresh works on each.
 - [ ] Search finds articles.
+- [ ] An article shows the share buttons and the Shares / Views totals; opening it adds one view, refreshing does not, and clicking a share button adds one share (the totals appear under the heading).
 - [ ] Newsletter, contact and advertise forms show a success message, the entry appears under NanoDigest in wp-admin, and the notification email arrives.
 - [ ] Shop → add to cart → checkout shows the right bank details. Place a test order: it appears in WooCommerce → Orders as "On hold" with the UTR, and the emails arrive. Cancel the test order afterwards.
 - [ ] `nanodigest.in/my-account/` shows the sign-in page.

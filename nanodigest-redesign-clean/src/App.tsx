@@ -1,9 +1,20 @@
 import { type ReactElement, useEffect, useMemo, useRef, useState } from 'react'
 import nanoDigestLogo from '../assets/images/nanodigest-logo.png'
 import bookCover from '../assets/images/book-cover.jpg'
-import { FORMS_UNAVAILABLE_MESSAGE, contentUrl, formUrl, submitForm } from './lib/api'
+import {
+  FORMS_UNAVAILABLE_MESSAGE,
+  contentUrl,
+  formUrl,
+  recordArticleShare,
+  recordArticleView,
+  submitForm,
+  type ArticleStats,
+  type ShareNetwork,
+} from './lib/api'
 import { accountUrl, externalCookieBanner, routerBasePath } from './lib/runtime'
 import { sanitizeCmsHtml, videoEmbedUrl } from './lib/sanitize'
+import { Icon } from './components/Icon'
+import { ArticleShare } from './components/ArticleShare'
 import { bankTransfer, bankTransferEnabled } from './lib/paymentDetails'
 import {
   curatedHomepageStories,
@@ -16,7 +27,7 @@ import {
   COOKIE_CHOICE_KEY,
   useAdsEnabled,
 } from './components/AdSlot'
-import { Typewriter } from './components/Typewriter'
+import { ScrollWords, WordsRise } from './components/TextAnimations'
 import { CountUp, PageProgress, TopicTicker, useSiteEffects } from './components/Effects'
 
 const basePath = routerBasePath
@@ -294,115 +305,6 @@ const pageLabels: Record<PageKey, string> = {
   terms: 'Terms & Conditions',
 }
 
-function Icon({ name, size = 20 }: { name: string; size?: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      {name === 'arrow' ? (
-        <>
-          <path d="M5 12h14M13 6l6 6-6 6" />
-        </>
-      ) : name === 'diagonal' ? (
-        <>
-          <path d="M6 18 18 6M6 6h12v12" />
-        </>
-      ) : name === 'search' ? (
-        <>
-          <circle cx="10.8" cy="10.8" r="6.5" />
-          <path d="m16 16 4 4" />
-        </>
-      ) : name === 'close' ? (
-        <path d="m6 6 12 12M6 18 18 6" />
-      ) : name === 'menu' ? (
-        <path d="M4 7h16M4 12h16M4 17h16" />
-      ) : name === 'chevron' ? (
-        <path d="m6 9 6 6 6-6" />
-      ) : name === 'mail' ? (
-        <>
-          <rect x="3" y="5" width="18" height="14" rx="2" />
-          <path d="m3 6 9 7 9-7" />
-        </>
-      ) : name === 'cart' ? (
-        <>
-          <circle cx="9" cy="20" r="1" />
-          <circle cx="18" cy="20" r="1" />
-          <path d="M3 4h2l2.2 11.1a2 2 0 0 0 2 1.6h8.6a2 2 0 0 0 1.9-1.4L22 8H6" />
-        </>
-      ) : name === 'youtube' ? (
-        <path
-          fill="currentColor"
-          stroke="none"
-          d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31.3 31.3 0 0 0 0 12a31.3 31.3 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31.3 31.3 0 0 0 24 12a31.3 31.3 0 0 0-.5-5.8ZM9.6 15.6V8.4l6.2 3.6-6.2 3.6Z"
-        />
-      ) : name === 'facebook' ? (
-        <path
-          fill="currentColor"
-          stroke="none"
-          d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07c0 6.02 4.39 11.02 10.13 11.93v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.69.24 2.69.24v2.97h-1.51c-1.49 0-1.96.93-1.96 1.88v2.26h3.33l-.53 3.49h-2.8V24C19.61 23.09 24 18.09 24 12.07Z"
-        />
-      ) : name === 'x' ? (
-        <path
-          fill="currentColor"
-          stroke="none"
-          d="M18.24 2.25h3.31l-7.23 8.26 8.5 11.24h-6.66l-5.21-6.82-5.97 6.82H1.67l7.73-8.84L1.25 2.25h6.83l4.71 6.23 5.45-6.23Zm-1.16 17.52h1.83L7.08 4.13H5.12l11.96 15.64Z"
-        />
-      ) : name === 'linkedin' ? (
-        <path
-          fill="currentColor"
-          stroke="none"
-          d="M20.45 20.45h-3.56v-5.57c0-1.33-.03-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28ZM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12ZM7.12 20.45H3.56V9h3.56v11.45ZM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0Z"
-        />
-      ) : name === 'dna' ? (
-        <>
-          <path d="M7 3c0 6 10 6 10 12v6M17 3c0 6-10 6-10 12v6" />
-          <path d="M8.6 7h6.8M8.6 17h6.8" />
-        </>
-      ) : name === 'flask' ? (
-        <>
-          <path d="M9 3h6M10 3v6l-5 10a2 2 0 0 0 1.8 3h10.4a2 2 0 0 0 1.8-3l-5-10V3" />
-          <path d="M7.5 15h9" />
-        </>
-      ) : name === 'cube' ? (
-        <>
-          <path d="M12 3 4 7.5v9L12 21l8-4.5v-9L12 3Z" />
-          <path d="m4 7.5 8 4.5 8-4.5M12 12v9" />
-        </>
-      ) : name === 'bolt' ? (
-        <path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z" />
-      ) : name === 'bulb' ? (
-        <>
-          <path d="M9 18h6M10 21h4" />
-          <path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2v.1h5v-.1c0-.8.4-1.5 1-2A6 6 0 0 0 12 3Z" />
-        </>
-      ) : name === 'arrow-up' ? (
-        <path d="M12 19V5M6 11l6-6 6 6" />
-      ) : name === 'whatsapp' ? (
-        <path
-          fill="currentColor"
-          stroke="none"
-          d="M12.04 2A9.9 9.9 0 0 0 2.13 11.9c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38a9.9 9.9 0 0 0 4.79 1.22h.01a9.91 9.91 0 0 0 9.91-9.91 9.82 9.82 0 0 0-2.9-7.01A9.82 9.82 0 0 0 12.04 2Zm0 1.67a8.2 8.2 0 0 1 5.83 2.42 8.2 8.2 0 0 1 2.41 5.82c0 4.54-3.7 8.24-8.25 8.24a8.2 8.2 0 0 1-4.19-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.19 8.19 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.25-8.24Zm-2.98 4.43c-.14 0-.37.05-.56.26-.19.21-.74.72-.74 1.75s.76 2.03.86 2.17c.11.14 1.5 2.29 3.63 3.21.51.22.9.35 1.21.45.51.16.97.14 1.34.08.41-.06 1.24-.51 1.42-1 .18-.49.18-.91.13-.99-.05-.09-.19-.14-.4-.24-.21-.11-1.24-.61-1.43-.68-.19-.07-.33-.11-.47.11-.14.21-.54.68-.66.82-.12.14-.24.16-.45.05-.21-.11-.88-.32-1.68-1.03-.62-.55-1.04-1.23-1.16-1.44-.12-.21-.01-.32.09-.43.09-.09.21-.24.32-.36.11-.12.14-.21.21-.35.07-.14.04-.26-.02-.37-.05-.11-.47-1.14-.65-1.56-.17-.41-.34-.36-.47-.36l-.4-.01Z"
-        />
-      ) : (
-        <>
-          <circle cx="12" cy="12" r="3" />
-          <ellipse cx="12" cy="12" rx="10" ry="4.5" transform="rotate(60 12 12)" />
-          <ellipse cx="12" cy="12" rx="10" ry="4.5" transform="rotate(-60 12 12)" />
-          <ellipse cx="12" cy="12" rx="10" ry="4.5" />
-        </>
-      )}
-    </svg>
-  )
-}
-
 export default function App() {
   useSiteEffects()
   const [articles, setArticles] = useState<Article[]>(sampleArticles)
@@ -421,6 +323,7 @@ export default function App() {
     internalPathFromLocation(window.location.pathname),
   )
   const [cmsPost, setCmsPost] = useState<WordPressPost | null>(null)
+  const [articleStats, setArticleStats] = useState<ArticleStats | null>(null)
   const [cmsPage, setCmsPage] = useState<WordPressPage | null>(null)
   const [cmsProduct, setCmsProduct] = useState<WordPressProduct | null>(null)
   const [contentLoading, setContentLoading] = useState(false)
@@ -608,6 +511,26 @@ export default function App() {
     }
     document.title = title
   }, [cmsPage, cmsPost, cmsProduct, page, routePath, topic])
+
+  // Each time an article opens, count the reading and show the totals.
+  const openedPostId = cmsPost?.id
+  useEffect(() => {
+    setArticleStats(null)
+    if (!openedPostId) return
+    const controller = new AbortController()
+    recordArticleView(openedPostId, controller.signal).then((stats) => {
+      if (stats && !controller.signal.aborted) setArticleStats(stats)
+    })
+    return () => controller.abort()
+  }, [openedPostId])
+
+  const handleArticleShare = (network: ShareNetwork) => {
+    if (!cmsPost) return
+    const postId = cmsPost.id
+    recordArticleShare(postId, network).then((stats) => {
+      if (stats) setArticleStats((current) => (cmsPost.id === postId ? stats : current))
+    })
+  }
 
   const chooseCookies = (choice: 'accepted' | 'essential') => {
     storeValue(COOKIE_CHOICE_KEY, choice)
@@ -1495,10 +1418,13 @@ export default function App() {
     const title = cmsPost?.title.rendered || cmsPage?.title.rendered || cmsProduct?.title.rendered
     const markup = cmsPost?.content?.rendered || cmsPage?.content?.rendered || cmsProduct?.content?.rendered || ''
     const contentLink = cmsPost?.link || cmsPage?.link || cmsProduct?.link
-    // On the live site the "original" is this very page, so the link is only
-    // useful on preview copies hosted somewhere else.
-    const originalUrl = contentLink && !contentLink.startsWith(window.location.origin) ? contentLink : ''
     const videoUrl = videoEmbedUrl(cmsPost?.nd_video_url)
+    // Share the article's own public address, so a preview or local copy of the
+    // site never ends up in a shared link. On the live site it is this very page.
+    const shareUrl =
+      contentLink && !contentLink.startsWith(window.location.origin)
+        ? contentLink
+        : `${window.location.origin}${window.location.pathname}`
     const categoryName = cmsPost?.categories
       .map((id) => contentCategories.find((category) => category.id === id)?.name)
       .filter((name): name is string => Boolean(name))
@@ -1544,6 +1470,15 @@ export default function App() {
                 </div>
               )}
             </div>
+            {isArticleDetail && title && (
+              <ArticleShare
+                variant="top"
+                url={shareUrl}
+                title={textFromHtml(title)}
+                stats={articleStats}
+                onShare={handleArticleShare}
+              />
+            )}
             {videoUrl ? (
               <div className="cms-video">
                 <iframe
@@ -1571,10 +1506,14 @@ export default function App() {
             {contentSecond && (
               <div className="cms-content" dangerouslySetInnerHTML={{ __html: contentSecond }} />
             )}
-            {originalUrl && (
-              <a className="secondary-button cms-source" href={originalUrl} target="_blank" rel="noreferrer">
-                View original on Nano Digest <Icon name="diagonal" size={15} />
-              </a>
+            {isArticleDetail && title && (
+              <ArticleShare
+                variant="bottom"
+                url={shareUrl}
+                title={textFromHtml(title)}
+                stats={articleStats}
+                onShare={handleArticleShare}
+              />
             )}
           </div>
           {showSidebarAd && (
@@ -2062,8 +2001,8 @@ export default function App() {
                 </span>
                 <h1>
                   <span className="sr-only">Small science. Limitless impact.</span>
-                  <span className="typewriter" aria-hidden="true">
-                    <Typewriter text="Small science. Limitless impact." accent="Limitless impact." />
+                  <span aria-hidden="true">
+                    <WordsRise text="Small science. Limitless impact." accent="Limitless impact." />
                   </span>
                 </h1>
                 <div className="intro-actions">
@@ -2184,6 +2123,13 @@ export default function App() {
                 </strong>
                 <span>video explainers on YouTube</span>
               </a>
+            </section>
+
+            <section className="statement-band" aria-label="The Nano Digest perspective">
+              <ScrollWords
+                text="The future is built from the molecular layer outward. Nano Digest connects the tiny breakthroughs to the big ideas shaping tomorrow."
+                emphasis={['tiny', 'breakthroughs']}
+              />
             </section>
 
             <section className="subject-section" aria-labelledby="subjects-heading">

@@ -25,6 +25,7 @@ require_once NANODIGEST_BACKEND_PATH . 'includes/post-types.php';
 require_once NANODIGEST_BACKEND_PATH . 'includes/meta-fields.php';
 require_once NANODIGEST_BACKEND_PATH . 'includes/rest-api.php';
 require_once NANODIGEST_BACKEND_PATH . 'includes/rest-handlers.php';
+require_once NANODIGEST_BACKEND_PATH . 'includes/counters.php';
 require_once NANODIGEST_BACKEND_PATH . 'includes/admin-ui.php';
 
 function nanodigest_backend_init() {

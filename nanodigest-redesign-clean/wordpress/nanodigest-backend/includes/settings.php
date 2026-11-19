@@ -13,6 +13,8 @@ function nanodigest_backend_setting_defaults() {
 	return array(
 		'notify_email'        => 'typicalcreatives@gmail.com',
 		'allowed_origins'     => '',
+		'legacy_views_key'    => '',
+		'legacy_shares_key'   => '',
 		'bank_account_name'   => '',
 		'bank_account_number' => '',
 		'bank_ifsc'           => '',
@@ -86,6 +88,12 @@ function nanodigest_backend_sanitize_settings( $input ) {
 
 	$clean['allowed_origins'] = isset( $input['allowed_origins'] ) ? sanitize_textarea_field( $input['allowed_origins'] ) : '';
 
+	// Meta field names only: letters, digits, underscore and dash.
+	foreach ( array( 'legacy_views_key', 'legacy_shares_key' ) as $key ) {
+		$name         = isset( $input[ $key ] ) ? trim( (string) $input[ $key ] ) : '';
+		$clean[ $key ] = preg_match( '/^[A-Za-z0-9_\-]{1,64}$/', $name ) ? $name : '';
+	}
+
 	foreach ( array( 'bank_account_name', 'bank_account_number', 'bank_ifsc', 'bank_name', 'bank_branch', 'bank_account_type', 'bank_upi' ) as $key ) {
 		$clean[ $key ] = isset( $input[ $key ] ) ? nanodigest_backend_sanitize_text( $input[ $key ], 120 ) : '';
 	}
@@ -154,6 +162,19 @@ function nanodigest_backend_settings_page() {
 						<td><input type="text" class="regular-text" id="nd_<?php echo esc_attr( $key ); ?>" name="nanodigest_backend_settings[<?php echo esc_attr( $key ); ?>]" value="<?php echo esc_attr( $settings[ $key ] ); ?>" autocomplete="off" /></td>
 					</tr>
 				<?php endforeach; ?>
+			</table>
+
+			<h2><?php esc_html_e( 'Article views and shares', 'nanodigest-backend' ); ?></h2>
+			<p><?php esc_html_e( 'Every article shows how many times it was read and shared. The new site counts from zero. To keep the numbers the old theme had collected, enter the names of the fields it saved them in; they are added to the new counts. Leave both empty to count from zero.', 'nanodigest-backend' ); ?></p>
+			<table class="form-table" role="presentation">
+				<tr>
+					<th scope="row"><label for="nd_legacy_views_key"><?php esc_html_e( 'Old views field', 'nanodigest-backend' ); ?></label></th>
+					<td><input type="text" class="regular-text code" id="nd_legacy_views_key" name="nanodigest_backend_settings[legacy_views_key]" value="<?php echo esc_attr( $settings['legacy_views_key'] ); ?>" autocomplete="off" /></td>
+				</tr>
+				<tr>
+					<th scope="row"><label for="nd_legacy_shares_key"><?php esc_html_e( 'Old shares field', 'nanodigest-backend' ); ?></label></th>
+					<td><input type="text" class="regular-text code" id="nd_legacy_shares_key" name="nanodigest_backend_settings[legacy_shares_key]" value="<?php echo esc_attr( $settings['legacy_shares_key'] ); ?>" autocomplete="off" /></td>
+				</tr>
 			</table>
 
 			<h2><?php esc_html_e( 'Other websites allowed to send forms', 'nanodigest-backend' ); ?></h2>
